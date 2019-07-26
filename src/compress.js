@@ -57,3 +57,4 @@ export default class Compress {
             console.log(file);
         });
     }
+}
