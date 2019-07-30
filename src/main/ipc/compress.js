@@ -14,6 +14,7 @@ const imageminSvgo = require('imagemin-svgo');
 
 const videoFileTypes = ['.mp4', '.MP4', '.mkv', '.MKV', '.mov', '.MOV', 'm4v', 'M4V'];
 const photoFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.svg', '.SVG', '.gif', '.GIF'];
+const powerpointFileTypes = ['.pptx'];
 const OUTPUT_path = './output/';
 
 const imageMinPlugins = [
@@ -32,6 +33,7 @@ export default class Compress {
         this.addToQueue = this.addToQueue.bind(this);
         this.compressImages = this.compressImages.bind(this);
         this.compressVideos = this.compressVideos.bind(this);
+        this.compressPowerpoint = this.compressPowerpoint.bind(this);
 
         this.photoQueue = new Queue(function (files, endTask) {
             console.log("from photoQueue:", files);
@@ -117,6 +119,10 @@ export default class Compress {
                 if (videoFileTypes.includes(path.extname(file))) {
                     await this.videoQueue.push(file);   
                 }
+
+                if (powerpointFileTypes.includes(path.extname(file))) {
+                    await this.compressPowerpoint(file);
+                }
             }   
         }
         catch(error) {
@@ -165,7 +171,7 @@ export default class Compress {
                     throw err;
                 }
                 console.log(data);
-                const image = await imagemin.buffer(data, { plugins: imageMinPlugins })
+                let image = await imagemin.buffer(data, { plugins: imageMinPlugins })
                 console.log(image)
                 await fs.writeFile(OUTPUT_path + path.basename(file), image, function(err) {
                     if(err) {
@@ -180,6 +186,62 @@ export default class Compress {
           console.error('Error: ', error);
         }
       }
+
+    async compressPowerpoint(file) {
+        const mediaFiles = [];
+        let newFile = OUTPUT_path + path.basename(file)
+        fs.createReadStream(file).pipe(fs.createWriteStream(newFile));
+        console.log(newFile)
+        fs.readFile(newFile, function(err, data) {
+            if (err) throw err;
+            JSZip.loadAsync(data).then(async function (zip) {
+                zip.folder("ppt/media").forEach((relativePath, file) => {
+                    mediaFiles.push(relativePath);
+                });
+                console.log("Number of files:", mediaFiles.length);
+                
+                for (const file of mediaFiles) {
+                    //console.log(zip.file("ppt/media/" + file).async("nodebuffer"))
+                    
+                    await zip.file("ppt/media/" + file).async("nodebuffer", function updateCallback(metadata) {
+                        console.log("progression: " + metadata.percent.toFixed(2) + " %")
+                    }).then(async (content) => {
+                        let image = await imagemin.buffer(content, { plugins: imageMinPlugins })
+                        console.log(image);
+                        console.log("ppt/media/" + file)
+
+                        //CURRENTLY NOT WRITING TO PPTX FILE!!!
+                        let zipFile = zip.file("ppt/media/" + file, image, {binary: true})
+                        console.log(zipFile)
+                        //fs.writeFile("output/"+ file, image, function(err){/*...*/});
+                        
+                    })
+                    
+                    //let image = await imagemin.buffer(buffer, { plugins: imageMinPlugins })
+                    
+                }
+                // zip.folder("ppt/media").generateAsync({type: "nodebuffer"}).then(async function (content) {
+                //     let image = await imagemin.buffer(content, { plugins: imageMinPlugins })
+                //     console.log(image)
+                //     //saveAs(content, "hello.zip");
+                //   }, function updateCallback(metadata) {
+                //     // print progression with metadata.percent and metadata.currentFile
+                //   });
+            });
+        });
+    }
+
+    async compressZip(file) {
+        fs.readFile(file, function(err, data) {
+            if (err) throw err;
+            JSZip.loadAsync(data).then(function (zip) {
+              
+              let files = Object.keys(zip.files);
+         
+              console.log(files);
+            });
+        });
+    }
 
 }
 

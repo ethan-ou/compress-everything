@@ -32,7 +32,7 @@ export default class DragAndDrop extends React.Component {
         
         return(
             <div>
-                <Dropzone onDrop={this.onDrop} accept={['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'video/mp4']} multiple >
+                <Dropzone onDrop={this.onDrop} accept={['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'video/mp4', '.pptx']} multiple >
                 {({getRootProps, getInputProps}) => (
                     <section>
                     <div {...getRootProps({className: 'dropzone'})}>
