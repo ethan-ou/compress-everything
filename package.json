@@ -53,6 +53,7 @@
     "jimp": "^0.6.4",
     "react-dropzone": "^10.1.6",
     "reactdom": "^2.0.0",
-    "terser": "^4.1.2"
+    "terser": "^4.1.2",
+    "tmp": "^0.1.0"
   }
 }

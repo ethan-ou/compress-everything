@@ -1,6 +1,7 @@
 const fs = require('fs');
 const Queue = require('better-queue');
 const path = require('path');
+const tmp = require('tmp');
 const JSZip = require("jszip");
 
 const imagemin = require('imagemin');
@@ -57,6 +58,7 @@ export default class Compress {
         this.compressImages = this.compressImages.bind(this);
         this.compressImageBuffer = this.compressImageBuffer.bind(this);
         this.compressVideos = this.compressVideos.bind(this);
+        //this.compressVideoBuffer = this.compressVideoBuffer.bind(this);
         this.compressWeb = this.compressWeb.bind(this);
         this.compressZip = this.compressZip.bind(this);
 
@@ -78,7 +80,23 @@ export default class Compress {
                 endTask();
             });
         }, { batchSize: 1, concurrent: 1 })
-        
+        this.compressVideoBuffer = new Queue((file, tmpDir, tmpName, endTask) => {
+            hbjs.spawn({ 
+                input: tmpobj.name + tmpName,
+                output: tmpDir + path.basename(file), 
+                preset: 'Vimeo YouTube HQ 1080p60' })
+            .on('error', console.error)
+            .on('progress', progress => {
+                console.log(
+                'Percent complete: %s, ETA: %s',
+                progress.percentComplete,
+                progress.eta
+                )})
+            .on('end', () => {
+                console.log("Done!");
+                endTask();
+            });
+        }, { batchSize: 1, concurrent: 1 })
         
     }
 
@@ -91,7 +109,9 @@ export default class Compress {
                     await this.compressImages(file);   
                 }
                 if (videoFileTypes.includes(path.extname(file))) {
-                    await this.videoQueue.push(file);   
+                    await this.videoQueue.push(file);
+                    //this.compressVideos(file);
+                    //this.videoQueue.push(file);   
                 }
                 if (zipFileTypes.includes(path.extname(file))) {
                     await this.compressZip(file);
@@ -127,6 +147,7 @@ export default class Compress {
 
     async compressVideos(file, endTask) {
         //add promise here
+        
         hbjs.spawn({ 
             input: file,
             output: OUTPUT_path + path.basename(file), 
@@ -141,8 +162,31 @@ export default class Compress {
         .on('end', () => {
             console.log("Done!");
             endTask();
+
         });
+
     }
+
+    // async compressVideoBuffer(file, tempPath, endTask) {
+    //     //add promise here
+
+        
+    //     hbjs.spawn({ 
+    //         input: file,
+    //         output: tempPath + path.basename(file), 
+    //         preset: 'Vimeo YouTube HQ 1080p60' })
+    //     .on('error', console.error)
+    //     .on('progress', progress => {
+    //         console.log(
+    //         'Percent complete: %s, ETA: %s',
+    //         progress.percentComplete,
+    //         progress.eta
+    //         )})
+    //     .on('end', () => {
+    //         console.log("Done!");
+    //         endTask();
+    //     });
+    // }
 
     async compressWeb(file) {
 
@@ -183,6 +227,13 @@ export default class Compress {
 
                 if (videoFileTypes.includes(path.extname(file))) {
                     //Still need to process video content in handbrake
+                    // const tmpobj = tmp.dirSync();
+                    // const tmpName = tmp.tmpNameSync();
+                    // console.log(tmpName);
+                    // await fs.writeFile(tmpobj.name + tmpName, content, (err) => {console.error(err)});
+                    
+                    //await this.compressVideoBuffer.push(file, tmpobj.name, tmpName);
+                    //processedContent = fs.readFileSync(tmpobj.name + path.basename(file))
                     processedContent = content;
                 }
 
@@ -197,6 +248,8 @@ export default class Compress {
             const zipContent = await zip.generateAsync({type:"nodebuffer", compression: "DEFLATE"}, metadata => {
                 console.log("progression: " + metadata.percent.toFixed(2) + " %")})
             fs.writeFile(OUTPUT_path + path.basename(file), zipContent, function(err){/*...*/});
+            
+            // tmpobj.removeCallback();
         });
     }
 }
