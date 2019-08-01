@@ -61,6 +61,7 @@ export default class Compress {
         //this.compressVideoBuffer = this.compressVideoBuffer.bind(this);
         this.compressWeb = this.compressWeb.bind(this);
         this.compressZip = this.compressZip.bind(this);
+        this.compressZipExperimental = this.compressZipExperimental.bind(this);
 
         this.videoQueue = new Queue(function (file, endTask) {
             console.log("from videoQueue:", file)
@@ -228,6 +229,8 @@ export default class Compress {
 
             for (const file of allFiles) {
                 const content = await zip.file(file).async("nodebuffer", metadata => console.log("progression: " + metadata.percent.toFixed(2) + " %"));
+                
+                
                 let processedContent = null;
                 if (photoFileTypes.includes(path.extname(file))) {
                     processedContent = await this.compressImageBuffer(content);
@@ -242,6 +245,15 @@ export default class Compress {
                     
                     //await this.compressVideoBuffer.push(file, tmpobj.name, tmpName);
                     //processedContent = fs.readFileSync(tmpobj.name + path.basename(file))
+                    // zip
+                    // .file(file)
+                    // .nodeStream()
+                    // .pipe(fs.createWriteStream('/tmp/my_text.txt'))
+                    // .on('finish', function () {
+                    //     // JSZip generates a readable stream with a "end" event,
+                    //     // but is piped here in a writable stream which emits a "finish" event.
+                    //     console.log("text file written.");
+                    // });
                     processedContent = content;
                 }
 
@@ -253,11 +265,89 @@ export default class Compress {
                 zip.file(file, processedContent, {binary: true})
             }
 
-            const zipContent = await zip.generateAsync({type:"nodebuffer", compression: "DEFLATE"}, metadata => {
-                console.log("progression: " + metadata.percent.toFixed(2) + " %")})
-            fs.writeFile(OUTPUT_path + path.basename(file), zipContent, function(err){/*...*/});
+            zip
+            .generateNodeStream({
+                streamFiles: true,
+                compression: "DEFLATE",
+                compressionOptions: {
+                level: 9
+            }})
+            .pipe(fs.createWriteStream(OUTPUT_path + path.basename(file)))
+            .on('finish', function () {
+                console.log(path.basename(file), "written.");
+            });
+
+            //const zipContent = await zip.generateAsync({type:"nodebuffer", compression: "DEFLATE", }, metadata => {
+            //   console.log("progression: " + metadata.percent.toFixed(2) + " %")})
+            //fs.writeFile(OUTPUT_path + path.basename(file), zipContent, function(err){/*...*/});
             
             // tmpobj.removeCallback();
         });
+    }
+
+    async compressZipExperimental(file) {
+        fs.readFile(file, async (err, data) => {
+            if (err) throw err;
+            const zip = await JSZip.loadAsync(data);
+            const allFiles = Object.keys(zip.files).filter((file) => {
+                if (photoFileTypes.includes(path.extname(file))) { return file };
+                if (videoFileTypes.includes(path.extname(file))) { return file };
+                if (webFileTypes.includes(path.extname(file))) { return file };
+            });
+            console.log("Number of Files:", allFiles.length);
+            console.log(allFiles);
+
+            zip
+            .generateInternalStream({type:"nodebuffer", streamFiles: true})
+            .on('data', async function (data, metadata) {
+                // data is a Uint8Array because that's the type asked in generateInternalStream
+                // metadata contains for example currentFile and percent, see the generateInternalStream doc.
+                // if (photoFileTypes.includes(path.extname(metadata.currentFile))) {
+                //     processedContent = await this.compressImageBuffer(data);
+                // }
+                console.log(metadata.currentFile);
+            })
+            .on('error', function (e) {
+                // e is the error
+            })
+            .on('end', function () {
+                // no parameter
+            })
+            .resume();
+
+            // for (const file of allFiles) {
+            //     const content = await zip.file(file).async("nodebuffer", metadata => console.log("progression: " + metadata.percent.toFixed(2) + " %"));
+            //     let processedContent = null;
+            //     if (photoFileTypes.includes(path.extname(file))) {
+            //         processedContent = await this.compressImageBuffer(content);
+            //     }
+
+            //     if (videoFileTypes.includes(path.extname(file))) {
+            //         //Still need to process video content in handbrake
+            //         // const tmpobj = tmp.dirSync();
+            //         // const tmpName = tmp.tmpNameSync();
+            //         // console.log(tmpName);
+            //         // await fs.writeFile(tmpobj.name + tmpName, content, (err) => {console.error(err)});
+                    
+            //         //await this.compressVideoBuffer.push(file, tmpobj.name, tmpName);
+            //         //processedContent = fs.readFileSync(tmpobj.name + path.basename(file))
+            //         processedContent = content;
+            //     }
+
+            //     if (webFileTypes.includes(path.extname(file))) {
+            //         processedContent = await this.compressWebBuffer(content, file);
+            //     }
+
+            //     console.log("File:", allFiles.indexOf(file), "of", allFiles.length);
+            //     zip.file(file, processedContent, {binary: true})
+            // }
+
+            // zip
+            // .generateNodeStream({streamFiles: true, compression: "DEFLATE"})
+            // .pipe(fs.createWriteStream(OUTPUT_path + path.basename(file)))
+            // .on('finish', function () {
+            //     console.log(path.basename(file), "written.");
+            // });
+        })
     }
 }
