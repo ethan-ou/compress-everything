@@ -8,7 +8,6 @@ const imagemin = require('imagemin');
 const imageminGifsicle = require('imagemin-gifsicle');
 const imageminMozjpeg = require('imagemin-mozjpeg');
 const imageminPngquant = require('imagemin-pngquant');
-const imageminOptipng = require('imagemin-optipng');
 const imageminSvgo = require('imagemin-svgo');
 const Jimp = require('jimp');
 const hbjs = require('handbrake-js');
@@ -51,7 +50,6 @@ const OUTPUT_path = './output/';
 const imageMinPlugins = [
     imageminMozjpeg({ quality: 80 }),
     imageminPngquant({ quality: [0.6, 0.8] }),
-    imageminOptipng(),
     imageminGifsicle({ optimizationLevel: 2 }),
     imageminSvgo({
         plugins: [
@@ -97,29 +95,27 @@ export default class Compress {
         this.compressZip = this.compressZip.bind(this);
         this.compressZipExperimental = this.compressZipExperimental.bind(this);
 
-        this.videoQueue = new Queue(
-            (file, endTask) => {
-                console.log('from videoQueue:', file);
-                hbjs.spawn({
-                    input: file,
-                    output: OUTPUT_path + path.basename(file),
-                    preset: 'Vimeo YouTube HQ 1080p60',
+        this.videoQueue = new Queue((file, endTask) => {
+            console.log('from videoQueue:', file);
+            hbjs.spawn({
+                input: file,
+                output: OUTPUT_path + path.basename(file),
+                preset: 'Vimeo YouTube HQ 1080p60',
+            })
+                .on('error', console.error)
+                .on('progress', (progress) => {
+                    console.log(
+                        'Percent complete: %s, ETA: %s',
+                        progress.percentComplete,
+                        progress.eta,
+                    );
                 })
-                    .on('error', console.error)
-                    .on('progress', (progress) => {
-                        console.log(
-                            'Percent complete: %s, ETA: %s',
-                            progress.percentComplete,
-                            progress.eta,
-                        );
-                    })
-                    .on('end', () => {
-                        console.log('Done!');
-                        endTask();
-                    });
-            },
-            { batchSize: 1, concurrent: 1 },
-        );
+                .on('end', () => {
+                    console.log('Done!');
+                    endTask();
+                });
+        }, { batchSize: 1, concurrent: 1 });
+
         this.compressVideoBuffer = new Queue(
             (file, tmpDir, tmpName, endTask) => {
                 hbjs.spawn({
@@ -139,9 +135,7 @@ export default class Compress {
                         console.log('Done!');
                         endTask();
                     });
-            },
-            { batchSize: 1, concurrent: 1 },
-        );
+            }, { batchSize: 1, concurrent: 1 });
     }
 
     async addToQueue(event, files) {
