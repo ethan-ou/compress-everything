@@ -3,8 +3,25 @@ import Dropzone from 'react-dropzone'
 import { ipcRenderer } from 'electron';
 
 const acceptedFileTypes = [
-    'image/png', 'image/jpeg', 'image/svg+xml', 'image/gif', 'video/mp4', '.pptx', '.docx', '.xlsx', 'application/zip'
+    'image/png',
+    'image/jpeg',
+    'image/svg+xml',
+    'image/gif',
+    'video/mp4',
+    '.m4v',
+    '.mkv',
+    '.mov',
+    '.mpeg',
+    'application/zip',
+    'application/epub+zip',
+    '.pptx',
+    '.docx',
+    '.xlsx',
+    'text/html',
+    'text/css',
+    'text/javascript'
 ]
+
 export default class DragAndDrop extends React.Component {
     constructor(props){
         super(props);

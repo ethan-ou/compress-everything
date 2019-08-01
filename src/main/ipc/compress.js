@@ -15,11 +15,11 @@ const Terser = require("terser");
 const CleanCSS = require('clean-css');
 const HTMLminify = require('html-minifier').minify;
 
-const videoFileTypes = ['.mp4', '.MP4', '.mkv', '.MKV', '.mov', '.MOV', 'm4v', 'M4V'];
+const videoFileTypes = ['.mp4', '.MP4', '.mkv', '.MKV', '.mov', '.MOV', 'm4v', 'M4V', '.mpeg', '.MPEG'];
 const photoFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.svg', '.SVG', '.gif', '.GIF'];
 const photoResizeFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG'];
 const webFileTypes = ['.html', '.HTML', '.css', '.CSS', '.js', '.JS'];
-const zipFileTypes = ['.zip', '.docx', '.pptx', '.xlsx'];
+const zipFileTypes = ['.zip', '.docx', '.pptx', '.xlsx', '.epub'];
 const OUTPUT_path = './output/';
 
 const imageMinPlugins = [
@@ -189,7 +189,15 @@ export default class Compress {
     // }
 
     async compressWeb(file) {
-
+        try {
+            await fs.readFile(file, async (err, data) => {
+                if (err) throw err;
+                const processedFile = await this.compressWebBuffer(data, file);
+                await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, err => console.error(err))
+            });
+        } catch(err) {
+          console.error('Error: ', err);
+        }
     }
 
     async compressWebBuffer(buffer, file) {
