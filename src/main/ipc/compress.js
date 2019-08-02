@@ -16,35 +16,15 @@ const Terser = require('terser');
 const CleanCSS = require('clean-css');
 const HTMLminify = require('html-minifier').minify;
 
-const videoFileTypes = [
-    '.mp4',
-    '.MP4',
-    '.mkv',
-    '.MKV',
-    '.mov',
-    '.MOV',
-    'm4v',
-    'M4V',
-    '.mpeg',
-    '.MPEG',
-];
-const photoFileTypes = [
-    '.jpg',
-    '.JPG',
-    '.jpeg',
-    '.JPEG',
-    '.png',
-    '.PNG',
-    '.svg',
-    '.SVG',
-    '.gif',
-    '.GIF',
-];
+const videoFileTypes = ['.mp4', '.MP4', '.mkv', '.MKV', '.mov', '.MOV', 'm4v', 'M4V', '.mpeg', '.MPEG'];
+const photoFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.svg', '.SVG', '.gif', '.GIF'];
 const photoResizeFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG'];
 const jpegFileTypes = ['.jpg', '.JPG', '.jpeg', '.JPEG'];
 const pngFileTypes = ['.png', '.PNG'];
 const webFileTypes = ['.html', '.HTML', '.css', '.CSS', '.js', '.JS'];
 const zipFileTypes = ['.zip', '.docx', '.pptx', '.xlsx', '.epub'];
+const resizeZipFileTypes = ['.zip', '.docx', '.pptx', '.xlsx'];
+
 const OUTPUT_path = './output/';
 
 const imageMinPlugins = [
@@ -190,7 +170,9 @@ export default class Compress {
         if (pngFileTypes.includes(fileType)) mime = Jimp.MIME_PNG;
         const image = await Jimp.read(buffer)
             .then((image) => {
-                image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
+                    image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                }
                 return image.getBufferAsync(mime);
             })
             .catch((err) => {
@@ -270,8 +252,11 @@ export default class Compress {
     }
 
     async compressZip(file) {
+        const isResizeFile = resizeZipFileTypes.includes(path.extname(file)) ? true : false;
+        console.log(isResizeFile);
         fs.readFile(file, async (err, data) => {
             if (err) throw err;
+
             const zip = await JSZip.loadAsync(data);
             const allFiles = Object.keys(zip.files).filter((file) => {
                 if (photoFileTypes.includes(path.extname(file))) {
@@ -284,7 +269,17 @@ export default class Compress {
                     return file;
                 }
             });
+            
             console.log('Number of Files:', allFiles.length);
+
+            const containsWebFile = allFiles.find((file) => {
+                if (webFileTypes.includes(path.extname(file))) {
+                    return file;
+                }
+            })? true : false;
+
+            console.log(containsWebFile);
+
 
             for (const file of allFiles) {
                 const content = await zip
@@ -293,7 +288,12 @@ export default class Compress {
 
                 let processedContent = null;
                 if (photoFileTypes.includes(path.extname(file))) {
-                    processedContent = await this.compressImageBuffer(content);
+                    let data = content;
+                    if (resizeImages && photoResizeFileTypes.includes(path.extname(file)) && isResizeFile && !containsWebFile) {
+                        console.log("Resizing");
+                        data = await this.resizeImage(data, path.extname(file));
+                    }
+                    processedContent = await this.compressImageBuffer(data);
                 }
 
                 if (videoFileTypes.includes(path.extname(file))) {

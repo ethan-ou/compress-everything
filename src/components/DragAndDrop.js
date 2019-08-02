@@ -14,6 +14,7 @@ const acceptedFileTypes = [
     '.mpeg',
     'application/zip',
     'application/epub+zip',
+    '.zip',
     '.pptx',
     '.docx',
     '.xlsx',
