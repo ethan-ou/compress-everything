@@ -3,6 +3,8 @@ const Queue = require('better-queue');
 const path = require('path');
 const tmp = require('tmp');
 const JSZip = require('jszip');
+const extract = require('extract-zip');
+const readdirp = require('readdirp');
 
 const imagemin = require('imagemin');
 const imageminGifsicle = require('imagemin-gifsicle');
@@ -71,6 +73,7 @@ export default class Compress {
         this.resizeImage = this.resizeImage.bind(this);
         this.compressVideos = this.compressVideos.bind(this);
         // this.compressVideoBuffer = this.compressVideoBuffer.bind(this);
+        this.compressZipFileSystem = this.compressZipFileSystem.bind(this);
         this.compressWeb = this.compressWeb.bind(this);
         this.compressZip = this.compressZip.bind(this);
         this.compressZipExperimental = this.compressZipExperimental.bind(this);
@@ -96,8 +99,7 @@ export default class Compress {
                 });
         }, { batchSize: 1, concurrent: 1 });
 
-        this.compressVideoBuffer = new Queue(
-            (file, tmpDir, tmpName, endTask) => {
+        this.compressVideoBuffer = new Queue((file, tmpDir, tmpName, endTask) => {
                 hbjs.spawn({
                     input: tmpobj.name + tmpName,
                     output: tmpDir + path.basename(file),
@@ -115,7 +117,7 @@ export default class Compress {
                         console.log('Done!');
                         endTask();
                     });
-            }, { batchSize: 1, concurrent: 1 });
+        }, { batchSize: 1, concurrent: 1 });
     }
 
     async addToQueue(event, files) {
@@ -129,6 +131,9 @@ export default class Compress {
                 if (videoFileTypes.includes(path.extname(file))) {
                     await this.videoQueue.push(file);
                 }
+                if (webFileTypes.includes(path.extname(file))) {
+                    await this.compressWeb(file);
+                }
                 if (zipFileTypes.includes(path.extname(file))) {
                     await this.compressZip(file);
                 }
@@ -140,17 +145,21 @@ export default class Compress {
 
     async compressImages(file) {
         try {
-            await fs.readFile(file, async (err, data) => {
-                if (err) throw err;
-                let fileData = data;
-                if (resizeImages && photoResizeFileTypes.includes(path.extname(file))) {
-                    fileData = await this.resizeImage(fileData, path.extname(file));
-                }
-                const processedFile = await this.compressImageBuffer(fileData);
-                await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, (err) => {
+            const photoQueue = new Queue(async (file, endTask) => {
+                await fs.readFile(file, async (err, data) => {
                     if (err) throw err;
+                    let fileData = data;
+                    if (resizeImages && photoResizeFileTypes.includes(path.extname(file))) {
+                        fileData = await this.resizeImage(fileData, path.extname(file));
+                    }
+                    const processedFile = await this.compressImageBuffer(fileData);
+                    await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, (err) => {
+                        if (err) throw err;
+                        endTask();
+                    });
                 });
-            });
+            }, { batchSize: 1, concurrent: 1 });
+            photoQueue.push(file);
         } catch (err) {
             console.error(err);
         }
@@ -203,26 +212,6 @@ export default class Compress {
                 endTask();
             });
     }
-
-    // async compressVideoBuffer(file, tempPath, endTask) {
-    //     //add promise here
-
-    //     hbjs.spawn({
-    //         input: file,
-    //         output: tempPath + path.basename(file),
-    //         preset: 'Vimeo YouTube HQ 1080p60' })
-    //     .on('error', console.error)
-    //     .on('progress', progress => {
-    //         console.log(
-    //         'Percent complete: %s, ETA: %s',
-    //         progress.percentComplete,
-    //         progress.eta
-    //         )})
-    //     .on('end', () => {
-    //         console.log("Done!");
-    //         endTask();
-    //     });
-    // }
 
     async compressWeb(file) {
         try {
@@ -342,6 +331,54 @@ export default class Compress {
             // fs.writeFile(OUTPUT_path + path.basename(file), zipContent, function(err){/*...*/});
 
             // tmpobj.removeCallback();
+        });
+    }
+
+    async compressZipFileSystem(file) {
+        tmp.dir(async (err, tempPath, cleanupCallback) => {
+            if (err) throw err;
+           
+            console.log('Dir: ', path);
+
+            await extract(file, {dir: tempPath}, async (err) => {
+                if (err) throw err;
+                const tempFiles = await readdirp.promise(tempPath);
+                const allFiles = tempFiles.map(file => file.path).filter((file) => {
+                    if (photoFileTypes.includes(path.extname(file))) {
+                        return file;
+                    }
+                    if (videoFileTypes.includes(path.extname(file))) {
+                        return file;
+                    }
+                    if (webFileTypes.includes(path.extname(file))) {
+                        return file;
+                    }
+                });
+                console.log(allFiles)
+                const queue = new Queue(async (file, endTask) => {
+                    if (photoFileTypes.includes(path.extname(file))) {
+                        await this.compressImages(tempPath + '/' + file);
+                    }
+                    if (videoFileTypes.includes(path.extname(file))) {
+                        await this.videoQueue.push(tempPath + '/' + file);
+                    }
+                    if (webFileTypes.includes(path.extname(file))) {
+                        await this.compressWeb(tempPath + '/' + file);
+                    }
+                    if (zipFileTypes.includes(path.extname(file))) {
+                        await this.compressZipFileSystem(tempPath + '/' + file);
+                    }
+                    endTask();
+                }, { batchSize: 1, concurrent: 1 });
+                queue.push(allFiles);
+            })
+            
+            
+           
+                        
+                   
+               
+            //cleanupCallback();
         });
     }
 
