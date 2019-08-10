@@ -1,8 +1,8 @@
 // Import parts of electron to use
-const {app, BrowserWindow, ipcMain} = require('electron');
-const path = require('path');
-const url = require('url');
-import Compress from "./src/main/ipc/index";
+import {app, BrowserWindow, ipcMain} from 'electron';
+import path from 'path';
+import url from 'url';
+import { addToQueue } from "./src/main/compress";
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -83,5 +83,4 @@ app.on('activate', () => {
   }
 });
 
-const newCompress = new Compress();
-ipcMain.on('files:submit', newCompress.addToQueue);
+ipcMain.on('files:submit', addToQueue);

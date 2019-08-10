@@ -39,7 +39,6 @@
   "dependencies": {
     "babel-preset-env": "^1.7.0",
     "babel-preset-stage-0": "^6.24.1",
-    "better-queue": "^3.8.10",
     "clean-css": "^4.2.1",
     "esm": "^3.2.25",
     "extract-zip": "^1.6.7",
@@ -52,6 +51,7 @@
     "imagemin-svgo": "^7.0.0",
     "jimp": "^0.6.4",
     "jszip": "^3.2.2",
+    "p-queue": "^6.1.0",
     "react-dropzone": "^10.1.6",
     "reactdom": "^2.0.0",
     "readdirp": "^3.1.1",
