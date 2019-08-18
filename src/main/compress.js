@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const tmp = require('tmp');
 const JSZip = require('jszip');
@@ -65,47 +65,82 @@ const HTMLMinifySettings = {
 
 const resizeImages = [2048, 2048];
 
-const mainQueue = new PQueue({concurrency: 1});
+const mainQueue = new PQueue({concurrency: 3});
+const altQueue = new PQueue({concurrency: 1});
 
 export async function addToQueue(event, files) {
-    try {
-        console.log('Number of files:', files.length);
-        console.log(files);
-        await Promise.all(files.map(async file => {
-            let fileExt = path.extname(file);
+    console.log('Number of files:', files.length);
+    console.log(files);
 
-            if (photoFileTypes.includes(fileExt)) {
-                await mainQueue.add(async () => await compressImages(file));
-            }
+    fs.ensureDir(OUTPUT_path, err => {
+        console.log(err)
+    })  
 
-            else if (videoFileTypes.includes(fileExt)) {
-                await mainQueue.add(async () => await compressVideos(file));
-            }
-
-            else if (webFileTypes.includes(fileExt)) {
-                await mainQueue.add(async () => await compressWeb(file));
-            }
-
-            else if (zipFileTypes.includes(fileExt)) {
-                await mainQueue.add(async () => await compressZip(file));
-            }
-
-            else {
-                console.err("File type not supported!")
-            }
-
-            console.log(`Queue size: ${mainQueue.size}`);
-        }));
-    } catch (err) {
-        console.error(err);
-    }
+    const [photo, video, web, zip, rejected] = await sortFiles(files);
+    await Promise.all([
+        photo.map(async file => await mainQueue.add(async () => await openFile(file, "photo"))),
+        web.map(async file => await mainQueue.add(async () => await openFile(file, "web"))),
+        video.map(async file => await altQueue.add(async () => await compressVideos(file))),
+        zip.map(async file => await altQueue.add(async () => await compressZip(file)))
+    ])
+    .then(values => console.log("Done!", values))
+    .catch(error => console.log(error))
+    
+    if (rejected) console.log(`Rejected ${rejected}`);
+    console.log(`Queue size: ${mainQueue.size}`);
+    console.log(`Queue size: ${altQueue.size}`);
 }
+
+async function sortFiles(files) {
+    //const photo, video, web, zip, rejected = [];
+    //const fileTypes = [...photoFileTypes, ...videoFileTypes, ...webFileTypes, ...zipFileTypes];
+
+    // for (file of files) {
+    //     let fileExt = path.extname(file);
+    //     if (photoFileTypes.includes(fileExt)) photo.push(file);
+    //     if (videoFileTypes.includes(fileExt)) video.push(file);
+    //     if (webFileTypes.includes(fileExt)) web.push(file);
+    //     if (zipFileTypes.includes(fileExt)) zip.push(file);
+    //     if (!fileTypes.includes(fileExt)) rejected.push(file);
+    // }
+
+    const photo = files.filter(file => photoFileTypes.includes(path.extname(file)));
+    const video = files.filter(file => videoFileTypes.includes(path.extname(file)));
+    const web = files.filter(file => webFileTypes.includes(path.extname(file)));
+    const zip = files.filter(file => zipFileTypes.includes(path.extname(file)));
+
+    const rejected = files.filter(file => {
+        const fileTypes = [...photoFileTypes, ...videoFileTypes, ...webFileTypes, ...zipFileTypes];
+        return !fileTypes.includes(path.extname(file))
+    });
+
+    return [photo, video, web, zip, rejected]
+}
+
+async function openFile(file, type) {
+    let promise = new Promise(async (resolve, reject) => {
+        await fs.readFile(file, async (err, data) => {
+            if (err) reject(err);
+           
+            let processed;
+            if (type == "photo") processed = await compressImageBuffer(data, file);
+            if (type == "web") processed = await compressWebBuffer(data, file);
+            
+            await fs.writeFile(OUTPUT_path + path.basename(file), processed, err => {
+                if (err) reject(err);
+                else resolve("done");
+            });
+        })
+    })
+    return promise
+}
+
 
 async function compressImages(file) {
     let promise = new Promise(async (resolve, reject) => {
         try {
             await fs.readFile(file, async (err, data) => {
-                if (err) throw err;
+                if (err) reject(err);
                 
                 let fileData = data;
                 
@@ -116,39 +151,47 @@ async function compressImages(file) {
                 const processedFile = await compressImageBuffer(fileData);
                 
                 await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, (err) => {
-                    if (err) throw err;
-                    resolve("done");
+                    if (err) reject(err);
+                    else resolve("done");
                 });
             });
         } catch (err) {
             reject(err);
-            console.error(err);
         }
     })
     
     return promise;
 }
 
-async function compressImageBuffer(buffer) {
+async function compressImageBuffer(buffer, file, resize = true) {
+    let promise = new Promise(async (resolve, reject) => {
         try {
-            return await imagemin.buffer(buffer, { plugins: imageMinPlugins });
+            console.log(buffer);
+            const resizedImage = await resizeImage(buffer, file, resize);
+            const processed = await imagemin.buffer(resizedImage, { plugins: imageMinPlugins });
+            resolve(processed);
         } catch (err) {
-            console.error(err);
+            reject(err);
         }
-    }
+    });
 
-async function resizeImage(buffer, fileType) {
-    let mime = null;
+    return promise;
+}
+
+async function resizeImage(buffer, file, resize) {
+    let mime;
+    const fileType = path.extname(file);
+    if (!resizeImages || !photoResizeFileTypes.includes(fileType) || !resize) return buffer;
     if (jpegFileTypes.includes(fileType)) mime = Jimp.MIME_JPEG;
     if (pngFileTypes.includes(fileType)) mime = Jimp.MIME_PNG;
     const image = await Jimp.read(buffer)
-        .then((image) => {
+        .then(image => {
             if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
                 image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
             }
             return image.getBufferAsync(mime);
         })
-        .catch((err) => {
+        .catch(err => {
             console.error(err);
         });
 
@@ -157,13 +200,12 @@ async function resizeImage(buffer, fileType) {
 
 async function compressVideos(file) {
     let promise = new Promise(async (resolve, reject) => {
-    hbjs.spawn({
-        input: file,
-        output: OUTPUT_path + path.basename(file),
-        preset: 'Vimeo YouTube HQ 1080p60',
-    })
+        hbjs.spawn({
+            input: file,
+            output: OUTPUT_path + path.basename(file),
+            preset: 'Vimeo YouTube HQ 1080p60',
+        })
         .on('error', (err) => {
-            console.error(err);
             reject(err);
         })
         .on('progress', (progress) => {
@@ -182,238 +224,107 @@ async function compressVideos(file) {
 }
 
 async function compressWeb(file) {
-    try {
-        await fs.readFile(file, async (err, data) => {
-            if (err) throw err;
-            const processedFile = await compressWebBuffer(data, file);
-            await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, err => console.error(err));
-        });
-    } catch (err) {
-        console.error('Error: ', err);
-    }
+    let promise = new Promise(async (resolve, reject) => {
+        try {
+            await fs.readFile(file, async (err, data) => {
+                if (err) reject(err);
+                const processedFile = await compressWebBuffer(data, file);
+                await fs.writeFile(OUTPUT_path + path.basename(file), processedFile, err => {
+                    if (err) reject(err);
+                    else resolve("done");
+                });
+            });
+        } catch (err) {
+            console.error('Error: ', err);
+        }
+    })
+    return promise;
 }
 
 async function compressWebBuffer(buffer, file) {
-    const webText = buffer.toString('ucs2');
-    let result = null;
-    if (path.extname(file) === '.html') {
-        result = HTMLminify(webText, HTMLMinifySettings);
-    }
-    if (path.extname(file) === '.css') {
-        result = new CleanCSS({ level: 2 }).minify(webText).styles;
-    }
-    if (path.extname(file) === '.js') {
-        result = Terser.minify(webText).code;
-    }
-    return Buffer.from(result, 'ucs2');
+    let promise = new Promise(async (resolve, reject) => {
+        try {
+            const data = buffer.toString('ucs2');
+            let fileType = path.extname(file);
+            let result;            
+            if (fileType === '.html') {
+                result = HTMLminify(data, HTMLMinifySettings);
+            }
+            if (fileType === '.css') {
+                result = new CleanCSS({ level: 2 }).minify(data).styles;
+            }
+            if (fileType === '.js') {
+                result = Terser.minify(data).code;
+            }
+            resolve(Buffer.from(result, 'ucs2'));
+        } catch (err) {
+            reject(err);
+        }
+        return promise;
+    })
 }
 
 async function compressZip(file) {
-    const isResizeFile = resizeZipFileTypes.includes(path.extname(file)) ? true : false;
-    console.log(isResizeFile);
-    fs.readFile(file, async (err, data) => {
-        if (err) throw err;
+    let promise = new Promise(async (resolve, reject) => {
+        fs.readFile(file, async (err, data) => {
+            if (err) reject(err);
 
-        const zip = await JSZip.loadAsync(data);
-        const allFiles = Object.keys(zip.files).filter((file) => {
-            if (photoFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-            if (videoFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-            if (webFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-        });
-        
-        console.log('Number of Files:', allFiles.length);
+            const zip = await JSZip.loadAsync(data);
+            const allFiles = Object.keys(zip.files);
+            const sortedFiles = await sortFiles(allFiles);
+            const processedZip = await processZip(zip, sortedFiles);
 
-        const containsWebFile = allFiles.find((file) => {
-            if (webFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-        })? true : false;
-
-        console.log(containsWebFile);
-
-
-        for (const file of allFiles) {
-            const content = await zip
-                .file(file)
-                .async('nodebuffer', metadata => console.log(`progression: ${metadata.percent.toFixed(2)} %`));
-
-            let processedContent = null;
-            if (photoFileTypes.includes(path.extname(file))) {
-                let data = content;
-                if (resizeImages && photoResizeFileTypes.includes(path.extname(file)) && isResizeFile && !containsWebFile) {
-                    console.log("Resizing");
-                    data = await resizeImage(data, path.extname(file));
-                }
-                processedContent = await compressImageBuffer(data);
-            }
-
-            if (videoFileTypes.includes(path.extname(file))) {
-                // Still need to process video content in handbrake
-                // const tmpobj = tmp.dirSync();
-                // const tmpName = tmp.tmpNameSync();
-                // console.log(tmpName);
-                // await fs.writeFile(tmpobj.name + tmpName, content, (err) => {console.error(err)});
-
-                // await compressVideoBuffer.push(file, tmpobj.name, tmpName);
-                // processedContent = fs.readFileSync(tmpobj.name + path.basename(file))
-                // zip
-                // .file(file)
-                // .nodeStream()
-                // .pipe(fs.createWriteStream('/tmp/my_text.txt'))
-                // .on('finish', function () {
-                //     // JSZip generates a readable stream with a "end" event,
-                //     // but is piped here in a writable stream which emits a "finish" event.
-                //     console.log("text file written.");
-                // });
-                processedContent = content;
-            }
-
-            if (webFileTypes.includes(path.extname(file))) {
-                processedContent = await compressWebBuffer(content, file);
-            }
-
-            console.log('File:', allFiles.indexOf(file) + 1, 'of', allFiles.length);
-            zip.file(file, processedContent, { binary: true });
-        }
-
-        zip.generateNodeStream({
-            streamFiles: true,
-            compression: 'DEFLATE',
-            compressionOptions: {
-                level: 9,
-            },
-        })
+            processedZip.generateNodeStream({
+                streamFiles: true,
+                compression: 'DEFLATE',
+                compressionOptions: {
+                    level: 9,
+                },
+            })
             .pipe(fs.createWriteStream(OUTPUT_path + path.basename(file)))
             .on('finish', () => {
                 console.log(path.basename(file), 'written.');
+                resolve("done");
             });
-    });
-}
-
-async function compressZipFileSystem(file) {
-    tmp.dir(async (err, tempPath, cleanupCallback) => {
-        if (err) throw err;
-        
-        console.log('Dir: ', path);
-
-        await extract(file, {dir: tempPath}, async (err) => {
-            if (err) throw err;
-            const tempFiles = await readdirp.promise(tempPath);
-            const allFiles = tempFiles.map(file => file.path).filter((file) => {
-                if (photoFileTypes.includes(path.extname(file))) {
-                    return file;
-                }
-                if (videoFileTypes.includes(path.extname(file))) {
-                    return file;
-                }
-                if (webFileTypes.includes(path.extname(file))) {
-                    return file;
-                }
-            });
-            console.log(allFiles)
-            const queue = new Queue(async (file, endTask) => {
-                if (photoFileTypes.includes(path.extname(file))) {
-                    await compressImages(tempPath + '/' + file);
-                }
-                if (videoFileTypes.includes(path.extname(file))) {
-                    await videoQueue.push(tempPath + '/' + file);
-                }
-                if (webFileTypes.includes(path.extname(file))) {
-                    await compressWeb(tempPath + '/' + file);
-                }
-                if (zipFileTypes.includes(path.extname(file))) {
-                    await compressZipFileSystem(tempPath + '/' + file);
-                }
-                endTask();
-            }, { batchSize: 1, concurrent: 1 });
-            queue.push(allFiles);
-        })
-        
-        
-        
-                    
-                
-            
-        //cleanupCallback();
-    });
-}
-
-async function compressZipExperimental(file) {
-    fs.readFile(file, async (err, data) => {
-        if (err) throw err;
-        const zip = await JSZip.loadAsync(data);
-        const allFiles = Object.keys(zip.files).filter((file) => {
-            if (photoFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-            if (videoFileTypes.includes(path.extname(file))) {
-                return file;
-            }
-            if (webFileTypes.includes(path.extname(file))) {
-                return file;
-            }
         });
-        console.log('Number of Files:', allFiles.length);
-        console.log(allFiles);
+    })
 
-        zip.generateInternalStream({
-            type: 'nodebuffer',
-            streamFiles: true,
-        })
-            .on('data', async (data, metadata) => {
-                // data is a Uint8Array because that's the type asked in generateInternalStream
-                // metadata contains for example currentFile and percent, see the generateInternalStream doc.
-                // if (photoFileTypes.includes(path.extname(metadata.currentFile))) {
-                //     processedContent = await compressImageBuffer(data);
-                // }
-                console.log(metadata.currentFile);
-            })
-            .on('error', (e) => {
-                // e is the error
-            })
-            .on('end', () => {
-                // no parameter
-            })
-            .resume();
+    return promise;
+}
 
-        // for (const file of allFiles) {
-        //     const content = await zip.file(file).async("nodebuffer", metadata => console.log("progression: " + metadata.percent.toFixed(2) + " %"));
-        //     let processedContent = null;
-        //     if (photoFileTypes.includes(path.extname(file))) {
-        //         processedContent = await compressImageBuffer(content);
-        //     }
+async function processZip(zip, files) {
+    const [photoFiles, videoFiles, webFiles, zipFiles, rejectedFiles] = files;
+    const containsWebFile = webFiles.length > 0 ? true : false;
+    const acceptedFiles = [...photoFiles, ...videoFiles, ...webFiles];
 
-        //     if (videoFileTypes.includes(path.extname(file))) {
-        //         //Still need to process video content in handbrake
-        //         // const tmpobj = tmp.dirSync();
-        //         // const tmpName = tmp.tmpNameSync();
-        //         // console.log(tmpName);
-        //         // await fs.writeFile(tmpobj.name + tmpName, content, (err) => {console.error(err)});
+    for (const file of acceptedFiles) {
+        const data = await zip
+            .file(file)
+            .async('nodebuffer', metadata => console.log(`progression: ${metadata.percent.toFixed(2)} %`));
 
-        //         //await compressVideoBuffer.push(file, tmpobj.name, tmpName);
-        //         //processedContent = fs.readFileSync(tmpobj.name + path.basename(file))
-        //         processedContent = content;
-        //     }
+        let processedData;
+        if (photoFileTypes.includes(path.extname(file))) {
+            let resize;
+            if (containsWebFile) {
+                console.log("Resizing");
+                resize = false;
+            } else {
+                resize = true;
+            }
+            processedData = await compressImageBuffer(data, file, resize);
+        }
 
-        //     if (webFileTypes.includes(path.extname(file))) {
-        //         processedContent = await compressWebBuffer(content, file);
-        //     }
+        if (videoFileTypes.includes(path.extname(file))) {
+            processedData = data;
+        }
 
-        //     console.log("File:", allFiles.indexOf(file), "of", allFiles.length);
-        //     zip.file(file, processedContent, {binary: true})
-        // }
+        if (webFileTypes.includes(path.extname(file))) {
+            processedData = await compressWebBuffer(data, file);
+        }
 
-        // zip
-        // .generateNodeStream({streamFiles: true, compression: "DEFLATE"})
-        // .pipe(fs.createWriteStream(OUTPUT_path + path.basename(file)))
-        // .on('finish', function () {
-        //     console.log(path.basename(file), "written.");
-        // });
-    });
+        console.log('File:', acceptedFiles.indexOf(file) + 1, 'of', acceptedFiles.length);
+        zip.file(file, processedData, { binary: true });
+    }
+
+    return zip;
 }

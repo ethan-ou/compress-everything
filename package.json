@@ -42,6 +42,7 @@
     "clean-css": "^4.2.1",
     "esm": "^3.2.25",
     "extract-zip": "^1.6.7",
+    "fs-extra": "^8.1.0",
     "handbrake-js": "^4.0.0",
     "html-minifier": "^4.0.0",
     "imagemin": "^7.0.0",

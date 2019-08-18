@@ -53,6 +53,11 @@ export default class DragAndDrop extends React.Component {
                         <input {...getInputProps()} />
                         <p>Drag 'n' drop some files here, or click to select files</p>
                     </div>
+                    <div>
+                        <label>Select your directory
+                            <input type="file" webkitdirectory="true"/>
+                        </label>
+                    </div>
                     </section>
                     )}
                 </Dropzone>
