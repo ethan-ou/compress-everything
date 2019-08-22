@@ -49,7 +49,6 @@ export async function compressImages(file) {
 export async function compressImageBuffer(buffer, file, resize = true) {
     let promise = new Promise(async (resolve, reject) => {
         try {
-            console.log(buffer);
             const resizedImage = await resizeImage(buffer, file, resize);
             const processed = await imagemin.buffer(resizedImage, { plugins: imageMinPlugins });
             resolve(processed);

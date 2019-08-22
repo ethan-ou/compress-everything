@@ -42,7 +42,6 @@ export async function addToQueue(event, files) {
         await queueFileType(sortedFiles.video, queue, compressVideos),
         await queueFileType(sortedFiles.zip, queue, compressZip),
     ])
-    .then(values => console.log("Done!", values))
     .catch(error => console.log(error))
 
     if (sortedFiles.rejected) console.log(`Rejected ${sortedFiles.rejected}`);
@@ -55,7 +54,6 @@ async function queueFileType(files, queueType, callback, options) {
 }
 
 function filterFiles(files, fileType) {
-    files.filter(file => console.log(mime.getType(file)))
     return files.filter(file => acceptedTypes[mime.getType(file)] === fileType);
 }
 
@@ -98,13 +96,11 @@ async function compressZip(file) {
             const zip = await JSZip.loadAsync(fileBuffer);
             const allFiles = Object.keys(zip.files);
             const sortedFiles = await sortFiles(allFiles);
-            console.log(sortedFiles);
             //Avoid resizing for files that may be displayed on the web.
             let setResize = true;
             if (sortedFiles.text == true || mime.getType(file) === "application/epub") setResize = false;
 
             const processedZip = await processZip(zip, sortedFiles, { resize: setResize });
-
             processedZip.generateNodeStream({
                 streamFiles: true,
                 compression: "DEFLATE",
@@ -127,18 +123,20 @@ async function compressZip(file) {
 
 
 async function processZip(zip, files, options) {
-    processZipFileType(zip, files.image, compressImageBuffer, options.resize);
-    processZipFileType(zip, files.text, compressTextBuffer);
+    await processZipFileType(zip, asyncQueue, files.image, compressImageBuffer, options.resize);
+    await processZipFileType(zip, asyncQueue, files.text, compressTextBuffer);
     return zip;
 }
 
-async function processZipFileType(zip, files, callback, options) {
-    files.forEach(async file => {
+async function processZipFileType(zip, queueType, files, callback, options) {
+    Promise.all(files.map(async file => {
         const data = await zip
             .file(file)
             .async("nodebuffer", metadata => console.log(`progression: ${metadata.percent.toFixed(2)} %`));
-        const processedData = await callback(data, file, options);
-        zip.file(file, processedData, { binary: true });
-    });
+        const processedData = await queueType.add(async () => await callback(data, file, options));
+        await zip.file(file, processedData, { binary: true });
+    }))
+    .catch(error => console.log(error));
+
     return zip;
 }

@@ -46,10 +46,8 @@ export async function compressText(file) {
 export async function compressTextBuffer(buffer, file, options) {
     let promise = new Promise(async (resolve, reject) => {
         try {
-            const data = buffer.toString("utf-8");
-            console.log(data);
-            let result;
-            console.log(file, mime.getType(file))            
+            const data = buffer.toString();
+            let result;     
             if (mime.getType(file) === "text/html") {
                 result = HTMLminify(data, HTMLMinifySettings);
             }
@@ -60,7 +58,7 @@ export async function compressTextBuffer(buffer, file, options) {
                 console.log(result = Terser.minify(data).error)
                 result = Terser.minify(data).code;
             }
-            resolve(Buffer.from(result, "utf-8"));
+            resolve(Buffer.from(result));
         } 
         catch (err) {
             reject(err);
