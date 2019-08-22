@@ -55,7 +55,7 @@ export async function compressTextBuffer(buffer, file, options) {
                 result = new CleanCSS({ level: 2 }).minify(data).styles;
             }
             if (mime.getType(file) === "text/javascript" || mime.getType(file) === "application/javascript") {
-                console.log(result = Terser.minify(data).error)
+                console.log("Error:", Terser.minify(data).error)
                 result = Terser.minify(data).code;
             }
             resolve(Buffer.from(result));

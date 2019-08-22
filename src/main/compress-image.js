@@ -30,7 +30,6 @@ export async function compressImages(file) {
         try {
             const fileBuffer = await fs.readFile(file)
             let compressedFileBuffer;
-            
             if (resizeImages) compressedFileBuffer = await resizeImage(fileBuffer, path.extname(file));
             else compressedFileBuffer = fileBuffer
 
@@ -61,21 +60,24 @@ export async function compressImageBuffer(buffer, file, resize = true) {
 }
 
 async function resizeImage(buffer, file, resize) {
-    let mimeType;
-    if (!resizeImages || mime.getType(file) !== "image/jpeg" || mime.getType(file) !== "image/png" || !resize) return buffer;
-    if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
-    if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
-    
-    const image = await Jimp.read(buffer)
-        .then(image => {
-            if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
-                image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
-            }
-            return image.getBufferAsync(mimeType);
-        })
-        .catch(err => {
-            console.error(err);
-        });
+    let promise = new Promise(async (resolve, reject) => {
+        let mimeType;
+        if (!resizeImages || !resize || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
+        if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
+        if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
+        
+        const image = await Jimp.read(buffer)
+            .then(image => {
+                if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
+                    image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                }
+                return image.getBufferAsync(mimeType);
+            })
+            .catch(err => {
+                reject(err)
+            });
 
-    return image;
+        resolve(image);
+    })
+    return promise
 }
