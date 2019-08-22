@@ -1,5 +1,5 @@
 // Import parts of electron to use
-import {app, BrowserWindow, ipcMain} from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import url from 'url';
 import { addToQueue } from "./src/main/compress";

@@ -1,27 +1,7 @@
 import React from 'react';
 import Dropzone from 'react-dropzone'
 import { ipcRenderer } from 'electron';
-
-const acceptedFileTypes = [
-    'image/png',
-    'image/jpeg',
-    'image/svg+xml',
-    'image/gif',
-    'video/mp4',
-    '.m4v',
-    '.mkv',
-    '.mov',
-    '.mpeg',
-    'application/zip',
-    'application/epub+zip',
-    '.zip',
-    '.pptx',
-    '.docx',
-    '.xlsx',
-    'text/html',
-    'text/css',
-    'text/javascript'
-]
+import { acceptedTypesArray } from '../constants/types';
 
 export default class DragAndDrop extends React.Component {
     constructor(props){
@@ -46,7 +26,7 @@ export default class DragAndDrop extends React.Component {
         
         return(
             <div>
-                <Dropzone onDrop={this.onDrop} accept={acceptedFileTypes} multiple >
+                <Dropzone onDrop={this.onDrop} accept={acceptedTypesArray} multiple >
                 {({getRootProps, getInputProps}) => (
                     <section>
                     <div {...getRootProps({className: 'dropzone'})}>
