@@ -1,5 +1,5 @@
 import '../assets/css/App.css';
-import React, { Component } from 'react';
+import React from 'react';
 import DragAndDrop from './DragAndDrop';
 
 
