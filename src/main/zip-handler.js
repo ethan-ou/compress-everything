@@ -1,8 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const JSZip = require('jszip');
-const extract = require('extract-zip');
-const readdirp = require('readdirp');
 const mime = require('mime');
 
 import { sortFiles } from './index';
