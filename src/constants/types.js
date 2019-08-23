@@ -9,6 +9,7 @@ export const acceptedTypes = {
     'video/quicktime': 'video',
     'video/mpeg': 'video',
     'application/zip': 'zip',
+    'application/x-zip-compressed': 'zip',
     'application/epub+zip': 'zip',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'zip',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'zip', 
