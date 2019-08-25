@@ -39,6 +39,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "dependencies": {
+    "autoprefixer": "^9.6.1",
     "clean-css": "^4.2.1",
     "esm": "^3.2.25",
     "fs-extra": "^8.1.0",
@@ -53,7 +54,9 @@
     "jszip": "^3.2.2",
     "mime": "^2.4.4",
     "p-queue": "^6.1.1",
+    "postcss-loader": "^3.0.0",
     "react-dropzone": "^10.1.7",
+    "tailwindcss": "^1.1.2",
     "terser": "^4.2.1",
     "tmp": "^0.1.0"
   }
