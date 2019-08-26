@@ -13,8 +13,8 @@ import { acceptedTypes } from '../constants/types';
 import { OUTPUT_path, resizeImages } from '../constants/settings';
 
 
-const asyncQueue = new PQueue({concurrency: 4});
-const queue = new PQueue({concurrency: 2});
+const asyncQueue = new PQueue({concurrency: 3});
+const queue = new PQueue({concurrency: 1});
 
 export async function addToQueue(event, files) {
     console.log("Number of files:", files.length);
