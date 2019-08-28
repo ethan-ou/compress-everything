@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const path = require('path');
-const tmp = require('tmp');
 const mime = require('mime');
 import PQueue from 'p-queue';
 
