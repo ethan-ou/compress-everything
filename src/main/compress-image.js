@@ -68,9 +68,8 @@ async function resizeImage(buffer, file, resize) {
         
         const image = await Jimp.read(buffer)
             .then(image => {
-                if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
-                    image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
-                }
+                //Found bug where if image has EXIF data, it will crop with black bars.
+                image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
                 return image.getBufferAsync(mimeType);
             })
             .catch(err => {
