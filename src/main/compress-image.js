@@ -66,10 +66,11 @@ async function resizeImage(buffer, file, resize) {
         if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
         if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
         
-        //Bug: If images are input with EXIF data, Jimp will resize with black bars.
         const image = await Jimp.read(buffer)
             .then(image => {
-                image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
+                    image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                }
                 return image.getBufferAsync(mimeType);
             })
             .catch(err => {
