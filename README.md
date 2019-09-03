@@ -14,7 +14,7 @@ How to install:
 
 Bugs & Fixes:
 [] When resizing images through JIMP with EXIF data, the images are letterboxed.
-[] Images currently throw an error when processing MacOS thumbnails.
+[] Images currently throw an error when processing MacOS thumbnails. Add extra checks in filetype to avoid this.
 [] Convert for loop to promise.all with reduce.
 [] Convert to promise.allSettled.
 [] Mock up first draft of UI.
