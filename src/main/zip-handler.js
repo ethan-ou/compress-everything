@@ -19,9 +19,8 @@ export async function compressZip(file, options) {
             const sortedFiles = await sortFiles(allFiles);
 
             //Avoid resizing for files that may be displayed on the web.
-            if (sortedFiles.text == true || mime.getType(file) === "application/epub") options.resize = false;
-
-            const processedZip = await processZip(zip, sortedFiles, options)
+            //if (sortedFiles.text == true || mime.getType(file) === "application/epub") options.resize = false;
+            const processedZip = await processZip(zip, sortedFiles, options);
 
             processedZip.generateNodeStream({
                 streamFiles: true,

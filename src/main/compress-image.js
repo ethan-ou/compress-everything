@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const mime = require('mime');
-const fileType = require('file-type');
 
 const imagemin = require('imagemin');
 const imageminGifsicle = require('imagemin-gifsicle');
@@ -30,8 +29,6 @@ export async function compressImages(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = await fs.readFile(file);
-            if (fileType(fileBuffer) === undefined) reject(new Error("File is not an image."));
-
             const processedFile = await compressImageBuffer(fileBuffer, file, options);
             await fs.writeFile(OUTPUT_path + path.basename(file), processedFile)
                 .then(() => resolve("Done"))
@@ -45,8 +42,6 @@ export async function compressImages(file, options) {
 export async function compressImageBuffer(buffer, file, options) {
     return new Promise(async (resolve, reject) => {
         try {
-            if (fileType(buffer) === undefined) reject(new Error("File is not an image."));
-            console.log(options);
             const resizedImage = await resizeImage(buffer, file, options);
             const processed = await imagemin.buffer(resizedImage, { plugins: imageMinPlugins });
             resolve(processed);
@@ -62,9 +57,8 @@ async function resizeImage(buffer, file, options) {
         if (!options.resize || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
         if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
         if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
-        console.log(options);
+        
         const resizeImages = setImageSize(options);
-        console.log(resizeImages);
         const image = await Jimp.read(buffer)
             .then(image => {
                 // UNFIXED: Found bug where if image has EXIF data, it will crop with black bars.
