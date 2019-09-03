@@ -29,7 +29,7 @@ const HTMLMinifySettings = {
 import { OUTPUT_path, resizeImages } from '../constants/settings'
 
 export async function compressText(file) {
-    let promise = new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = await fs.readFile(file)
             const processedFile = await compressTextBuffer(fileBuffer, file);
@@ -40,11 +40,10 @@ export async function compressText(file) {
             reject(err);
         }
     });
-    return promise;
 }
 
 export async function compressTextBuffer(buffer, file, options) {
-    let promise = new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             const data = buffer.toString();
             let result;     
@@ -64,5 +63,4 @@ export async function compressTextBuffer(buffer, file, options) {
             reject(err);
         }
     });
-    return promise;
 }

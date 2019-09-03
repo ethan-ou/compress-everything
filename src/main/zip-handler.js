@@ -11,7 +11,7 @@ import { compressTextBuffer } from './compress-text';
 import { OUTPUT_path, resizeImages } from '../constants/settings';
 
 export async function compressZip(file) {
-    let promise = new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = fs.readFile(file);
             const zip = await JSZip.loadAsync(fileBuffer);
@@ -41,7 +41,6 @@ export async function compressZip(file) {
             reject(err)
         }
     });
-    return promise;
 }
 
 

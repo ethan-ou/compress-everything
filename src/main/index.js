@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
 const mime = require('mime');
+
+import 'core-js/proposals/promise-all-settled'
 import PQueue from 'p-queue';
 
 import { compressZip } from './zip-handler';
@@ -24,13 +26,13 @@ export async function addToQueue(event, files) {
     })  
 
     const sortedFiles = await sortFiles(files);
-    await Promise.all([
+    const results = await Promise.allSettled([
         await queueFileType(sortedFiles.image, asyncQueue, openFile, "image"),
         await queueFileType(sortedFiles.text, asyncQueue, openFile, "text"),
         await queueFileType(sortedFiles.video, queue, compressVideos),
         await queueFileType(sortedFiles.zip, queue, compressZip),
     ])
-    .catch(error => console.log(error))
+    console.log(results);
 
     if (sortedFiles.rejected) console.log(`Rejected ${sortedFiles.rejected}`);
     console.log(`Queue size: ${asyncQueue.size}`);
