@@ -28,11 +28,11 @@ const HTMLMinifySettings = {
 
 import { OUTPUT_path, resizeImages } from '../constants/settings'
 
-export async function compressText(file) {
+export async function compressText(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
-            const fileBuffer = await fs.readFile(file)
-            const processedFile = await compressTextBuffer(fileBuffer, file);
+            const fileBuffer = await fs.readFile(file);
+            const processedFile = await compressTextBuffer(fileBuffer, file, options);
             await fs.writeFile(OUTPUT_path + path.basename(file), processedFile)
                 .then(() => resolve("Done"))
         } 

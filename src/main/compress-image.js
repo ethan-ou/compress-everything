@@ -24,19 +24,15 @@ const imageMinPlugins = [
     }),
 ];
 
-import { OUTPUT_path, resizeImages } from '../constants/settings'
+import { OUTPUT_path } from '../constants/settings'
 
-export async function compressImages(file) {
+export async function compressImages(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = await fs.readFile(file);
             if (fileType(fileBuffer) === undefined) reject(new Error("File is not an image."));
 
-            let compressedFileBuffer;
-            if (resizeImages) compressedFileBuffer = await resizeImage(fileBuffer, path.extname(file));
-            else compressedFileBuffer = fileBuffer;
-
-            const processedFile = await compressImageBuffer(compressedFileBuffer);
+            const processedFile = await compressImageBuffer(fileBuffer, file, options);
             await fs.writeFile(OUTPUT_path + path.basename(file), processedFile)
                 .then(() => resolve("Done"))
         } 
@@ -46,12 +42,12 @@ export async function compressImages(file) {
     });
 }
 
-export async function compressImageBuffer(buffer, file, resize = true) {
+export async function compressImageBuffer(buffer, file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             if (fileType(buffer) === undefined) reject(new Error("File is not an image."));
-            console.log(file);
-            const resizedImage = await resizeImage(buffer, file, resize);
+            console.log(options);
+            const resizedImage = await resizeImage(buffer, file, options);
             const processed = await imagemin.buffer(resizedImage, { plugins: imageMinPlugins });
             resolve(processed);
         } catch (err) {
@@ -60,22 +56,39 @@ export async function compressImageBuffer(buffer, file, resize = true) {
     });
 }
 
-async function resizeImage(buffer, file, resize) {
+async function resizeImage(buffer, file, options) {
     return new Promise(async (resolve, reject) => {
         let mimeType;
-        if (!resizeImages || !resize || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
+        if (!options.resize || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
         if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
         if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
+        console.log(options);
+        const resizeImages = setImageSize(options);
+        console.log(resizeImages);
         const image = await Jimp.read(buffer)
             .then(image => {
                 // UNFIXED: Found bug where if image has EXIF data, it will crop with black bars.
-                image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                if (image.bitmap.width > resizeImages[0] || image.bitmap.height > resizeImages[1]) {
+                    image.scaleToFit(resizeImages[0], resizeImages[1], Jimp.RESIZE_BICUBIC);
+                }
                 return image.getBufferAsync(mimeType);
             })
             .catch(err => {
                 reject(err)
             });
-
         resolve(image);
     });
+}
+
+function setImageSize(options) {
+    switch(options.resolution) {
+        case '0':
+            return [800, 800];
+        case '1':
+            return [1280, 1280];
+        case '2':
+            return [1600, 1600];
+        case '3':
+            return [2048, 2048];
+    }
 }

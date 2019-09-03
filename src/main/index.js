@@ -17,26 +17,32 @@ import { OUTPUT_path, resizeImages } from '../constants/settings';
 const asyncQueue = new PQueue({concurrency: 3});
 const queue = new PQueue({concurrency: 1});
 
-export async function addToQueue(event, files) {
+export async function addToQueue(event, state) {
+    console.log(state);
+    return await handleFiles(state.files, state.options);
+}
+
+async function handleFiles(files, options) {
     console.log("Number of files:", files.length);
     console.log(files);
-
+    console.log(options);
     fs.ensureDir(OUTPUT_path, err => {
         console.log(err)
     })  
 
     const sortedFiles = await sortFiles(files);
-    const results = await Promise.allSettled([
-        await queueFileType(sortedFiles.image, asyncQueue, openFile, "image"),
-        await queueFileType(sortedFiles.text, asyncQueue, openFile, "text"),
-        await queueFileType(sortedFiles.video, queue, compressVideos),
-        await queueFileType(sortedFiles.zip, queue, compressZip),
-    ])
-    console.log(results);
-
     if (sortedFiles.rejected) console.log(`Rejected ${sortedFiles.rejected}`);
+
+    const results = await Promise.allSettled([
+        await queueFileType(sortedFiles.image, asyncQueue, compressImages, options),
+        await queueFileType(sortedFiles.text, asyncQueue, compressText, options),
+        await queueFileType(sortedFiles.video, queue, compressVideos, options),
+        await queueFileType(sortedFiles.zip, queue, compressZip, options),
+    ])
     console.log(`Queue size: ${asyncQueue.size}`);
     console.log(`Queue size: ${queue.size}`);
+
+    return results;
 }
 
 export function sortFiles(files) {
@@ -62,20 +68,19 @@ function filterFiles(files, fileType) {
     return files.filter(file => acceptedTypes[mime.getType(file)] === fileType);
 }
 
-async function openFile(file, type) {
-    let promise = new Promise(async (resolve, reject) => {
-        try {
-            const fileBuffer = await fs.readFile(file)
-            let compressedFileBuffer;
-            if (type == "image") compressedFileBuffer = await compressImageBuffer(fileBuffer, file);
-            if (type == "text") compressedFileBuffer = await compressTextBuffer(fileBuffer, file);
-            await fs.writeFile(OUTPUT_path + path.basename(file), compressedFileBuffer)
-                .then(() => resolve("Done"));
-        }
-        catch (err) {
-            reject(err);
-        }
-    })
-    return promise;
-}
+// async function openFile(file, options) {
+//     return new Promise(async (resolve, reject) => {
+//         try {
+//             const fileBuffer = await fs.readFile(file)
+//             let compressedFileBuffer;
+//             if (options.type == "image") compressedFileBuffer = await compressImageBuffer(fileBuffer, file, options);
+//             if (options.type == "text") compressedFileBuffer = await compressTextBuffer(fileBuffer, file, options);
+//             await fs.writeFile(OUTPUT_path + path.basename(file), compressedFileBuffer)
+//                 .then(() => resolve("Done"));
+//         }
+//         catch (err) {
+//             reject(err);
+//         }
+//     })
+// }
 

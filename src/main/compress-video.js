@@ -2,7 +2,7 @@ const path = require('path');
 const hbjs = require('handbrake-js');
 import { OUTPUT_path, resizeImages } from '../constants/settings'
 
-export async function compressVideos(file) {
+export async function compressVideos(file, options) {
     return new Promise(async (resolve, reject) => {
         hbjs.spawn({
             input: file,

@@ -10,7 +10,7 @@ import { compressTextBuffer } from './compress-text';
 
 import { OUTPUT_path, resizeImages } from '../constants/settings';
 
-export async function compressZip(file) {
+export async function compressZip(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = fs.readFile(file);
@@ -19,10 +19,9 @@ export async function compressZip(file) {
             const sortedFiles = await sortFiles(allFiles);
 
             //Avoid resizing for files that may be displayed on the web.
-            let setResize = true;
-            if (sortedFiles.text == true || mime.getType(file) === "application/epub") setResize = false;
+            if (sortedFiles.text == true || mime.getType(file) === "application/epub") options.resize = false;
 
-            const processedZip = await processZip(zip, sortedFiles, { resize: setResize })
+            const processedZip = await processZip(zip, sortedFiles, options)
 
             processedZip.generateNodeStream({
                 streamFiles: true,
@@ -46,8 +45,8 @@ export async function compressZip(file) {
 
 async function processZip(zip, files, options) {
     const originalZip = zip;
-    const processedZip1 = await processZipFileType(originalZip, files.image, compressImageBuffer, options.resize);
-    const processedZip2 = await processZipFileType(processedZip1, files.text, compressTextBuffer);
+    const processedZip1 = await processZipFileType(originalZip, files.image, compressImageBuffer, options);
+    const processedZip2 = await processZipFileType(processedZip1, files.text, compressTextBuffer, options);
     return processedZip2;
 }
 
