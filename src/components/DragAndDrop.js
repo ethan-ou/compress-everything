@@ -8,6 +8,7 @@ export default class DragAndDrop extends React.Component {
         super(props);
         this.state = {
             files: [],
+            resolution: "1"
         }   
     }
     onDrop = (acceptedFiles) => {
@@ -15,6 +16,18 @@ export default class DragAndDrop extends React.Component {
         this.setState({files: acceptedFiles})
         const filePaths = acceptedFiles.map( file => file.path );
         ipcRenderer.send('files:submit', filePaths);
+    }
+
+    handleInputChange = (event) => {
+        const target = event.target;
+        const value = target.type === 'checkbox' ? target.checked : target.value;
+        const name = target.name;
+    
+        this.setState({
+          [name]: value
+        });
+    
+        console.log(this.state);
     }
 
     render() {
@@ -41,6 +54,20 @@ export default class DragAndDrop extends React.Component {
                     </section>
                     )}
                 </Dropzone>
+                <div>
+                    <input type="radio" id="contactChoice1" name="resolution" onChange={this.handleInputChange} value="0" />
+                    <label htmlFor="contactChoice1">Small (800px)</label>
+
+                    <input type="radio" id="contactChoice2" name="resolution" onChange={this.handleInputChange} value="1" defaultChecked />
+                    <label htmlFor="contactChoice2">Medium (1600px)</label>
+
+                    <input type="radio" id="contactChoice3" name="resolution" onChange={this.handleInputChange} value="2" />
+                    <label htmlFor="contactChoice3">Large (2048px)</label>
+
+                    <input type="radio" id="contactChoice4" name="resolution" onChange={this.handleInputChange} value="3" />
+                    <label htmlFor="contactChoice4">Custom</label>
+                </div>
+
                 {this.state.files.length > 0 &&
                     <div>
                         <h3>Previews</h3>
@@ -51,9 +78,6 @@ export default class DragAndDrop extends React.Component {
                         ))}
                     </div>
                 }
-                <p>
-                    
-                </p>
             </div>
             
         )
