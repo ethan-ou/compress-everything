@@ -26,14 +26,14 @@ const HTMLMinifySettings = {
     removeTagWhitespace: true,
 };
 
-import { OUTPUT_path, resizeImages } from '../constants/settings'
+import { setOutputType } from '../constants/settings'
 
 export async function compressText(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = await fs.readFile(file);
             const processedFile = await compressTextBuffer(fileBuffer, file, options);
-            await fs.writeFile(OUTPUT_path + path.basename(file), processedFile)
+            await fs.writeFile(setOutputType(options, file), processedFile)
                 .then(() => resolve("Done"))
         } 
         catch (err) {

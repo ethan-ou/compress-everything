@@ -9,8 +9,9 @@ export default class DragAndDrop extends React.Component {
         super(props);
         this.state = {
             files: [],
-            output: "",
-            outputPath: "",
+            outputType: "0",
+            outputPath: "./output",
+            outputFilename: "-compressed",
             resize: true,
             avoidResizeZip: true,
             resolution: "1"
@@ -73,11 +74,13 @@ export default class DragAndDrop extends React.Component {
                 </Dropzone>
                 <div>
                     <h2>Output Folder:</h2>
-                    <input type="radio" id="output1" name="output" onChange={this.handleInputChange} checked={this.state.output === "0"} value="0" />
-                    <label htmlFor="output1">Same Directory, Rename</label>
-                    <input type="radio" id="output2" name="output" onChange={this.handleInputChange} checked={this.state.output === "0"} value="0" />
+                    <input type="radio" id="output1" name="outputType" onChange={this.handleInputChange} checked={this.state.outputType === "0"} value="0" />
+                    <label htmlFor="output1">Same Directory, Rename to Filename
+                        <input type="text" name="outputFilename" onChange={this.handleInputChange} disabled={this.state.outputType !== "0"} value={this.state.outputFilename}  />
+                    </label>
+                    <input type="radio" id="output2" name="outputType" onChange={this.handleInputChange} checked={this.state.outputType === "1"} value="1" />
                     <label htmlFor="output2">Select directory
-                        <input type="file" webkitdirectory="true" name="outputPath" onChange={this.handleInputChange}/>
+                        <input type="file" webkitdirectory="true" name="outputPath" onChange={this.handleInputChange} disabled={this.state.outputType !== "1"} />
                     </label>
                 </div>
 

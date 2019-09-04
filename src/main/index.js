@@ -11,15 +11,12 @@ import { compressVideos } from './compress-video';
 import { compressText, compressTextBuffer } from './compress-text';
 
 import { acceptedTypes } from '../constants/types';
-import { OUTPUT_path, resizeImages } from '../constants/settings';
-
 
 const asyncQueue = new PQueue({concurrency: 3});
 const asyncQueueZip = new PQueue({concurrency: 3});
 const queue = new PQueue({concurrency: 1});
 
 export async function addToQueue(event, state) {
-    console.log(state);
     return await handleFiles(state.files, state.options);
 }
 
@@ -27,7 +24,7 @@ async function handleFiles(files, options) {
     console.log("Number of files:", files.length);
     console.log(files);
     console.log(options);
-    fs.ensureDir(OUTPUT_path, err => {
+    fs.ensureDir(options.outputPath, err => {
         console.log(err)
     })  
 

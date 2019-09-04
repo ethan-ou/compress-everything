@@ -1,12 +1,12 @@
 const path = require('path');
 const hbjs = require('handbrake-js');
-import { OUTPUT_path, resizeImages } from '../constants/settings'
+import { setOutputType } from '../constants/settings'
 
 export async function compressVideos(file, options) {
     return new Promise(async (resolve, reject) => {
         hbjs.spawn({
             input: file,
-            output: OUTPUT_path + path.basename(file),
+            output: setOutputType(options, file),
             preset: "Vimeo YouTube HQ 1080p60",
         })
         .on("error", (err) => {

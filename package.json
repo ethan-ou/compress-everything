@@ -22,11 +22,13 @@
     "@babel/core": "*",
     "@babel/preset-env": "*",
     "@babel/preset-react": "*",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@fullhuman/postcss-purgecss": "*",
     "autoprefixer": "*",
     "babel-loader": "^8.0.6",
     "babili-webpack-plugin": "*",
     "css-loader": "^3.2.0",
+    "core-js": "*",
     "electron": "^6.0.7",
     "electron-packager": "^14.0.5",
     "file-loader": "^4.2.0",
@@ -43,9 +45,7 @@
     "webpack-dev-server": "*"
   },
   "dependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
     "clean-css": "*",
-    "core-js": "*",
     "esm": "*",
     "fs-extra": "*",
     "handbrake-js": "*",

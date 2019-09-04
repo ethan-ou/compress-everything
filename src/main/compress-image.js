@@ -23,14 +23,14 @@ const imageMinPlugins = [
     }),
 ];
 
-import { OUTPUT_path } from '../constants/settings'
+import { setImageSize, setOutputType } from '../constants/settings'
 
 export async function compressImages(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
             const fileBuffer = await fs.readFile(file);
             const processedFile = await compressImageBuffer(fileBuffer, file, options);
-            await fs.writeFile(OUTPUT_path + path.basename(file), processedFile)
+            await fs.writeFile(setOutputType(options, file), processedFile)
                 .then(() => resolve("Done"))
         } 
         catch (err) {
@@ -54,7 +54,8 @@ export async function compressImageBuffer(buffer, file, options) {
 async function resizeImage(buffer, file, options) {
     return new Promise(async (resolve, reject) => {
         let mimeType;
-        if (!options.resize || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
+        console.log(options);
+        if (!options.resize || options.zipHasWebFiles || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
         if (mime.getType(file) === "image/jpeg") mimeType = Jimp.MIME_JPEG;
         if (mime.getType(file) === "image/png") mimeType = Jimp.MIME_PNG;
         
@@ -72,17 +73,4 @@ async function resizeImage(buffer, file, options) {
             });
         resolve(image);
     });
-}
-
-function setImageSize(options) {
-    switch(options.resolution) {
-        case '0':
-            return [800, 800];
-        case '1':
-            return [1280, 1280];
-        case '2':
-            return [1600, 1600];
-        case '3':
-            return [2048, 2048];
-    }
 }
