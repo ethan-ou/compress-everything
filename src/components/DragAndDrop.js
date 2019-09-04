@@ -50,7 +50,7 @@ export default class DragAndDrop extends React.Component {
         
         return(
             <div>
-                <Dropzone 
+                <Dropzone
                     onDrop={this.onDrop} 
                     accept={acceptedTypesArray} 
                     getDataTransferItems={evt =>
@@ -62,13 +62,10 @@ export default class DragAndDrop extends React.Component {
                 >
                 {({getRootProps, getInputProps}) => (
                     <section>
-                    <div {...getRootProps({className: 'dropzone'})}>
-                        <input {...getInputProps()} />
-                        <p>Drag 'n' drop some files here, or click to select files</p>
-                    </div>
-                    <div>
-                        
-                    </div>
+                        <div {...getRootProps({className: 'p-10 py-16 border-dashed border-4 border-gray-600 bg-gray-200 hover:bg-white'})}>
+                            <input {...getInputProps()} />
+                            <p className="text-xl font-bold text-gray-800 text-center">Drag 'n' drop some files, or click to select files</p>
+                        </div>
                     </section>
                     )}
                 </Dropzone>
