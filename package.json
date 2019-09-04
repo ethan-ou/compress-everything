@@ -50,6 +50,7 @@
     "fs-extra": "*",
     "handbrake-js": "*",
     "html-minifier": "*",
+    "html5-file-selector": "^2.1.0",
     "imagemin": "*",
     "imagemin-gifsicle": "*",
     "imagemin-mozjpeg": "*",

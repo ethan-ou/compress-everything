@@ -15,6 +15,7 @@ import { OUTPUT_path, resizeImages } from '../constants/settings';
 
 
 const asyncQueue = new PQueue({concurrency: 3});
+const asyncQueueZip = new PQueue({concurrency: 3});
 const queue = new PQueue({concurrency: 1});
 
 export async function addToQueue(event, state) {
@@ -37,8 +38,10 @@ async function handleFiles(files, options) {
         await queueFileType(sortedFiles.image, asyncQueue, compressImages, options),
         await queueFileType(sortedFiles.text, asyncQueue, compressText, options),
         await queueFileType(sortedFiles.video, queue, compressVideos, options),
-        await queueFileType(sortedFiles.zip, queue, compressZip, options),
-    ])
+        await queueFileType(sortedFiles.zip, asyncQueueZip, compressZip, options),
+    ]).then((values) => {
+        console.log(values);
+    })
     console.log(`Queue size: ${asyncQueue.size}`);
     console.log(`Queue size: ${queue.size}`);
 

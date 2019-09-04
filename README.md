@@ -18,3 +18,4 @@ Bugs & Fixes:
 [] Convert for loop to promise.all with reduce.
 [] Convert to promise.allSettled.
 [] Mock up first draft of UI.
+[] Add checking if a file is about to be overwritten on save.
