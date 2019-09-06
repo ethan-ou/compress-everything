@@ -10,7 +10,6 @@ import { compressTextBuffer } from './compressText';
 
 import { setOutputType } from '../constants/settings';
 
-
 export async function compressZip(file, options) {
     return new Promise(async (resolve, reject) => {
         try {
