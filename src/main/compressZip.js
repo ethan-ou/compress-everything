@@ -3,12 +3,13 @@ import mime from 'mime';
 import path from 'path';
 import JSZip from 'jszip';
 
-import { sortFiles } from './index';
-import { compressImageBuffer } from './compress-image';
-import { compressVideos } from './compress-video';
-import { compressTextBuffer } from './compress-text';
+import { sortFiles } from './utils';
+import { compressImageBuffer } from './compressImage';
+import { compressVideos } from './compressVideo';
+import { compressTextBuffer } from './compressText';
 
 import { setOutputType } from '../constants/settings';
+
 
 export async function compressZip(file, options) {
     return new Promise(async (resolve, reject) => {

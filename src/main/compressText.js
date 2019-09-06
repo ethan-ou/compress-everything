@@ -25,6 +25,10 @@ const HTMLMinifySettings = {
     removeTagWhitespace: true,
 };
 
+const CleanCssSettings = {
+    level: 2
+}
+
 import { setOutputType } from '../constants/settings'
 
 export async function compressText(file, options) {
@@ -50,7 +54,7 @@ export async function compressTextBuffer(buffer, file, options) {
                 result = HTMLminify(data, HTMLMinifySettings);
             }
             if (mime.getType(file) === "text/css") {
-                result = new CleanCSS({ level: 2 }).minify(data).styles;
+                result = new CleanCSS(CleanCssSettings).minify(data).styles;
             }
             if (mime.getType(file) === "text/javascript" || mime.getType(file) === "application/javascript") {
                 console.log("Error:", Terser.minify(data).error)
