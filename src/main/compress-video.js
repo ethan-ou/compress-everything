@@ -1,5 +1,4 @@
-const path = require('path');
-const hbjs = require('handbrake-js');
+import hbjs from 'handbrake-js';
 import { setOutputType } from '../constants/settings'
 
 export async function compressVideos(file, options) {

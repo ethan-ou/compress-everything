@@ -1,7 +1,7 @@
-const fs = require('fs-extra');
-const path = require('path');
-const JSZip = require('jszip');
-const mime = require('mime');
+import fs from 'fs-extra';
+import mime from 'mime';
+import path from 'path';
+import JSZip from 'jszip';
 
 import { sortFiles } from './index';
 import { compressImageBuffer } from './compress-image';
@@ -44,7 +44,7 @@ export async function compressZipBuffer(buffer, file, options) {
 
             //Avoid resizing for files that may be displayed on the web.
             let zipHasWebFiles;
-            if (options.avoidResizeZip && (sortedFiles.text || mime.getType(file) === "application/epub")) zipHasWebFiles = true;
+            if ((options.avoidResizeZip) && (sortedFiles.text || mime.getType(file) === "application/epub")) zipHasWebFiles = true;
             const processedZip = await processZip(zip, sortedFiles, {...options, zipHasWebFiles});
             resolve(processedZip)
         }
@@ -56,10 +56,9 @@ export async function compressZipBuffer(buffer, file, options) {
 
 
 async function processZip(zip, files, options) {
-    let compressedZip = zip;
-    await processZipFileType(compressedZip, files.image, compressImageBuffer, options);
-    await processZipFileType(compressedZip, files.text, compressTextBuffer, options);
-    return compressedZip;
+    await processZipFileType(zip, files.image, compressImageBuffer, options);
+    await processZipFileType(zip, files.text, compressTextBuffer, options);
+    return zip;
 }
 
 async function processZipFileType(zip, files, callback, options) {

@@ -1,8 +1,6 @@
-const fs = require('fs-extra');
-const path = require('path');
-const mime = require('mime');
-
 import 'core-js/proposals/promise-all-settled'
+import fs from 'fs-extra';
+import mime from 'mime';
 import PQueue from 'p-queue';
 
 import { compressZip } from './zip-handler';
@@ -17,7 +15,7 @@ const asyncQueueZip = new PQueue({concurrency: 3});
 const queue = new PQueue({concurrency: 1});
 
 export async function addToQueue(event, state) {
-    return await handleFiles(state.files, state.options);
+    return handleFiles(state.files, state.options);
 }
 
 async function handleFiles(files, options) {
@@ -61,7 +59,7 @@ export function sortFiles(files) {
 }
 
 async function queueFileType(files, queueType, callback, options) {
-    await files.map(async file => await queueType.add(async () => await callback(file, options)))
+    await files.map(async file => queueType.add(async () => callback(file, options)));
 }
 
 function filterFiles(files, fileType) {

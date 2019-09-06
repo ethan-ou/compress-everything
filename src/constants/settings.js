@@ -1,4 +1,8 @@
-const path = require('path');
+import path from 'path';
+import imageminGifsicle from 'imagemin-gifsicle';
+import imageminMozjpeg from 'imagemin-mozjpeg';
+import imageminPngquant from 'imagemin-pngquant';
+import imageminSvgo from 'imagemin-svgo';
 
 export function setImageSize(options) {
     switch(options.resolution) {
@@ -28,5 +32,16 @@ export function setOutputType(options, file) {
     }
 }
 
-export const resizeImages = [2048, 2048];
-export const OUTPUT_path = './output/';
+export const imageMinPlugins = [
+    imageminMozjpeg({ quality: 80 }),
+    imageminPngquant({ quality: [0.6, 0.8] }),
+    imageminGifsicle({ optimizationLevel: 2 }),
+    imageminSvgo({
+        plugins: [
+            {
+                removeTitle: true,
+                removeDimensions: true,
+            },
+        ],
+    }),
+];

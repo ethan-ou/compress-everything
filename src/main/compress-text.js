@@ -1,10 +1,9 @@
-const fs = require('fs-extra');
-const path = require('path');
-const mime = require('mime');
+import fs from 'fs-extra';
+import mime from 'mime';
 
-const Terser = require('terser');
-const CleanCSS = require('clean-css');
-const HTMLminify = require('html-minifier').minify;
+import Terser from 'terser';
+import CleanCSS from 'clean-css';
+import { minify as HTMLminify } from 'html-minifier';
 
 const HTMLMinifySettings = {
     collapseBooleanAttributes: true,

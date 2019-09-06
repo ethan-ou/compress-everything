@@ -1,29 +1,10 @@
-const fs = require('fs-extra');
-const path = require('path');
-const mime = require('mime');
+import fs from 'fs-extra';
+import mime from 'mime';
 
-const imagemin = require('imagemin');
-const imageminGifsicle = require('imagemin-gifsicle');
-const imageminMozjpeg = require('imagemin-mozjpeg');
-const imageminPngquant = require('imagemin-pngquant');
-const imageminSvgo = require('imagemin-svgo');
-const Jimp = require('jimp');
+import imagemin from 'imagemin';
+import Jimp from 'jimp';
 
-const imageMinPlugins = [
-    imageminMozjpeg({ quality: 80 }),
-    imageminPngquant({ quality: [0.6, 0.8] }),
-    imageminGifsicle({ optimizationLevel: 2 }),
-    imageminSvgo({
-        plugins: [
-            {
-                removeTitle: true,
-                removeDimensions: true,
-            },
-        ],
-    }),
-];
-
-import { setImageSize, setOutputType } from '../constants/settings'
+import { setImageSize, setOutputType, imageMinPlugins } from '../constants/settings'
 
 export async function compressImages(file, options) {
     return new Promise(async (resolve, reject) => {
