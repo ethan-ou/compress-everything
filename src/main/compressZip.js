@@ -41,10 +41,10 @@ export async function compressZipBuffer(buffer, file, options) {
             const zip = await JSZip.loadAsync(buffer);
             const allFiles = Object.keys(zip.files);
             const sortedFiles = await sortFiles(allFiles);
-
+            
             //Avoid resizing for files that may be displayed on the web.
             let zipHasWebFiles;
-            if ((options.avoidResizeZip) && (sortedFiles.text || mime.getType(file) === "application/epub")) zipHasWebFiles = true;
+            if ((options.avoidResizeZip) && (sortedFiles.text.length > 0 || mime.getType(file) === "application/epub")) zipHasWebFiles = true;
             const processedZip = await processZip(zip, sortedFiles, {...options, zipHasWebFiles});
             resolve(processedZip)
         }
