@@ -30,10 +30,15 @@ export async function compressTextBuffer(buffer, file, options) {
                 result = HTMLminify(data, HTMLMinifySettings);
             }
             if (mime.getType(file) === "text/css") {
+                console.log("Error:", new CleanCSS(CleanCSSSettings).minify(data).errors);
+                console.log("Warning:", new CleanCSS(CleanCSSSettings).minify(data).warnings);
                 result = new CleanCSS(CleanCSSSettings).minify(data).styles;
             }
             if (mime.getType(file) === "text/javascript" || mime.getType(file) === "application/javascript") {
-                console.log("Error:", Terser.minify(data).error)
+                if (Terser.minify(data).error) {
+                    console.log(Terser.minify(data).error);
+                    resolve(buffer);
+                }
                 result = Terser.minify(data).code;
             }
             resolve(Buffer.from(result));
