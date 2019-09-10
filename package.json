@@ -1,12 +1,12 @@
 {
-  "name": "basic-electron-react-boilerplate",
-  "version": "0.7.0",
-  "description": "Minimal and modern react+electron+webpack boilerplate",
-  "author": "Phillip Barbiero",
-  "homepage": "https://github.com/pbarbiero/basic-electron-react-boilerplate",
+  "name": "compress-everything",
+  "version": "0.0.1",
+  "description": "Compress images, videos, powerpoints and more with one simple tool.",
+  "author": "Ethan Ou",
+  "homepage": "https://github.com/ethan-ou/compress-everything",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pbarbiero/basic-electron-react-boilerplate.git"
+    "url": "https://github.com/ethan-ou/compress-everything.git"
   },
   "license": "MIT",
   "main": "index.js",
