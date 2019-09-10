@@ -24,6 +24,7 @@
     "@babel/preset-env": "*",
     "@babel/preset-react": "*",
     "@fullhuman/postcss-purgecss": "*",
+    "@tailwindcss/custom-forms": "^0.2.1",
     "autoprefixer": "*",
     "babel-loader": "^8.0.6",
     "babili-webpack-plugin": "*",

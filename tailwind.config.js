@@ -18,6 +18,11 @@ module.exports = {
         ]
       }
     },
-    variants: {},
-    plugins: [],
+    variants: {
+      backgroundColor: ['responsive', 'hover', 'focus', 'disabled'],
+      opacity: ['responsive', 'hover', 'focus', 'disabled'],
+    },
+    plugins: [
+      require('@tailwindcss/custom-forms')
+    ],
   }
