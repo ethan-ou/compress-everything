@@ -1,5 +1,8 @@
+import fs from 'fs-extra';
+import path from 'path';
 import mime from 'mime';
 import { acceptedTypes } from '../constants/types';
+import { setOutputType } from '../constants/settings'
 
 function sortFiles(files) {
     const image = filterFiles(files, "image");
@@ -32,4 +35,17 @@ function filterFile(file, fileType) {
     return acceptedTypes[mime.getType(file)] === fileType;
 }
 
-export { sortFiles, queueFiles, queueFile, filterFiles, filterFile }
+async function ensureFileDirectory(options, file) {
+    if (options.outputType === '1' || options.outputType === '2') {
+        fs.ensureDir(path.dirname(setOutputType(options, file)))
+        .then(() => {
+            Promise.resolve("Directory Checked or Added");
+        })
+        .catch(() => {
+            Promise.reject("Directory Error")
+        })
+    }
+    Promise.resolve("Directory Checked");
+}
+
+export { sortFiles, queueFiles, queueFile, filterFiles, filterFile, ensureFileDirectory }

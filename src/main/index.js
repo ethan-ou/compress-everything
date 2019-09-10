@@ -6,7 +6,8 @@ import { compressZip } from './compressZip';
 import { compressImages } from './compressImage';
 import { compressVideos } from './compressVideo';
 import { compressText } from './compressText';
-import { sortFiles, queueFiles, queueFile, filterFiles, filterFile } from './utils'
+import { sortFiles, queueFiles, queueFile, filterFiles, filterFile, ensureFileDirectory } from './utils'
+
 
 const asyncQueue = new PQueue({concurrency: 3});
 const asyncQueueZip = new PQueue({concurrency: 3});
@@ -21,10 +22,7 @@ async function handleFiles(files, options) {
     console.log(files);
     console.log(options);
 
-    fs.ensureDir(options.outputPath, err => {
-        console.log(err)
-    })  
-
+    await Promise.allSettled(files.map(async file => ensureFileDirectory(options, file)));
     const results = await Promise.allSettled(files.map(async file => {
         if (filterFile(file, "image")) {
             return queueFile(file, options, compressImages, asyncQueue);

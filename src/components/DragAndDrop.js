@@ -10,6 +10,7 @@ export default class DragAndDrop extends React.Component {
         this.state = {
             files: [],
             outputType: "0",
+            outputNewFolder: "compressed",
             outputPath: "./output",
             outputFilename: "-compressed",
             resize: true,
@@ -71,34 +72,54 @@ export default class DragAndDrop extends React.Component {
                 </Dropzone>
                 <div>
                     <h2>Output Folder:</h2>
-                    <input type="radio" id="output1" name="outputType" onChange={this.handleInputChange} checked={this.state.outputType === "0"} value="0" />
-                    <label htmlFor="output1">Same Directory, Rename to Filename
-                        <input type="text" name="outputFilename" onChange={this.handleInputChange} disabled={this.state.outputType !== "0"} value={this.state.outputFilename}  />
-                    </label>
-                    <input type="radio" id="output2" name="outputType" onChange={this.handleInputChange} checked={this.state.outputType === "1"} value="1" />
-                    <label htmlFor="output2">Select directory
-                        <input type="file" webkitdirectory="true" name="outputPath" onChange={this.handleInputChange} disabled={this.state.outputType !== "1"} />
-                    </label>
+                    <select name="outputType" onChange={this.handleInputChange} value={this.state.outputType} >
+                        <option value="0">Rename File</option>
+                        <option value="1">New Folder</option>
+                        <option value="2">Select a Folder</option>
+                    </select>
+                    { 
+                        this.state.outputType === "0" ? 
+                        <label>Suffix:
+                            <input 
+                                type="text" 
+                                name="outputFilename" 
+                                onChange={this.handleInputChange} 
+                                disabled={this.state.outputType !== "0"} 
+                                value={this.state.outputFilename}  
+                            />
+                        </label>
+                        : this.state.outputType === "1" ?
+                        <label>Folder Name:
+                            <input 
+                                type="text" 
+                                name="outputNewFolder" 
+                                onChange={this.handleInputChange} 
+                                disabled={this.state.outputType !== "1"} 
+                                value={this.state.outputNewFolder}  
+                            />     
+                        </label>
+                        : this.state.outputType === "2" ?
+                        <input 
+                            type="file" 
+                            webkitdirectory="true" 
+                            name="outputPath" 
+                            onChange={this.handleInputChange} 
+                            disabled={this.state.outputType !== "2"} 
+                        />
+                        : null
+                    }
                 </div>
 
                 <div>
                     <input type="checkbox" id="resizeSwitch" name="resize" onChange={this.handleInputChange} checked={this.state.resize} />
                     <label htmlFor="resizeSwitch">Resize</label>
 
-                    <input type="radio" id="resize1" name="resolution" onChange={this.handleInputChange} checked={this.state.resolution === "0"} disabled={!this.state.resize} value="0" />
-                    <label htmlFor="resize1">Small (800px)</label>
-
-                    <input type="radio" id="resize2" name="resolution" onChange={this.handleInputChange} checked={this.state.resolution === "1"} disabled={!this.state.resize} value="1" />
-                    <label htmlFor="resize2">Medium (1280px)</label>
-
-                    <input type="radio" id="resize3" name="resolution" onChange={this.handleInputChange} checked={this.state.resolution === "2"} disabled={!this.state.resize} value="2" />
-                    <label htmlFor="resize3">Large (1600px)</label>
-
-                    <input type="radio" id="resize4" name="resolution" onChange={this.handleInputChange} checked={this.state.resolution === "3"} disabled={!this.state.resize} value="3" />
-                    <label htmlFor="resize4">Extra-Large (2048px)</label>
-
-                    {/* <input type="radio" id="resize5" name="resolution" onChange={this.handleInputChange} checked={this.state.resolution === "4"} disabled={!this.state.resize} value="4" />
-                    <label htmlFor="resize6">Custom</label> */}
+                    <select name="resolution" disabled={!this.state.resize} onChange={this.handleInputChange} value={this.state.resolution} >
+                        <option value="0">Small (800px)</option>
+                        <option value="1">Medium (1280px)</option>
+                        <option value="2">Large (1600px)</option>
+                        <option value="3">X-Large (2048px)</option>
+                    </select>
                 </div>
 
                 <div>

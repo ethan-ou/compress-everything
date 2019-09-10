@@ -26,6 +26,11 @@ export function setOutputType(options, file) {
                     });
         case '1':
             return path.format({
+                        dir: path.join(path.dirname(file), options.outputNewFolder),
+                        base: path.basename(file)
+                    });
+        case '2':
+            return path.format({
                         dir: options.outputPath,
                         base: path.basename(file)
                     });

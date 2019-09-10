@@ -33,6 +33,7 @@ export async function compressTextBuffer(buffer, file, options) {
                 console.log("Error:", new CleanCSS(CleanCSSSettings).minify(data).errors);
                 console.log("Warning:", new CleanCSS(CleanCSSSettings).minify(data).warnings);
                 result = new CleanCSS(CleanCSSSettings).minify(data).styles;
+                if (result === '') resolve(buffer);
             }
             if (mime.getType(file) === "text/javascript" || mime.getType(file) === "application/javascript") {
                 if (Terser.minify(data).error) {
