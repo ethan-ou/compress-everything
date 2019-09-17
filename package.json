@@ -12,6 +12,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "test": "jest",
     "prod": "webpack --config webpack.build.config.js --mode production && electron --noDevServer .",
     "dev": "webpack-dev-server --hot --host 0.0.0.0 --config=./webpack.dev.config.js --mode development",
     "build": "webpack --config webpack.build.config.js --mode production",
@@ -37,6 +38,7 @@
     "eslint-plugin-react": "^7.14.3",
     "file-loader": "^4.2.0",
     "html-webpack-plugin": "*",
+    "jest": "^24.9.0",
     "mini-css-extract-plugin": "^0.8.0",
     "postcss-loader": "*",
     "react": "*",

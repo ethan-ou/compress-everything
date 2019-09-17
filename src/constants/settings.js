@@ -4,40 +4,35 @@ import imageminMozjpeg from 'imagemin-mozjpeg';
 import imageminPngquant from 'imagemin-pngquant';
 import imageminSvgo from 'imagemin-svgo';
 
-export function setImageSize(options) {
-    switch(options.resolution) {
-        case '0':
-            return [800, 800];
-        case '1':
-            return [1280, 1280];
-        case '2':
-            return [1600, 1600];
-        case '3':
-            return [2048, 2048];
+function setImageSize(options) {
+    let imageSize = {
+        '0': [800, 800],
+        '1': [1280, 1280],
+        '2': [1600, 1600],
+        '3': [2048, 2048]
     }
+    return imageSize[options.resolution]
 }
 
-export function setOutputType(options, file) {
-    switch(options.outputType) {
-        case '0':
-            return path.format({
-                        dir: path.dirname(file),
-                        base: path.basename(file, path.extname(file)) + options.outputFilename + path.extname(file)
-                    });
-        case '1':
-            return path.format({
-                        dir: path.join(path.dirname(file), options.outputNewFolder),
-                        base: path.basename(file)
-                    });
-        case '2':
-            return path.format({
-                        dir: options.outputPath,
-                        base: path.basename(file)
-                    });
+function setOutputType(options, file) {
+    let outputType = {
+        '0': path.format({
+                dir: path.dirname(file),
+                base: path.basename(file, path.extname(file)) + options.outputFilename + path.extname(file)
+            }),
+        '1': path.format({
+                dir: path.join(path.dirname(file), options.outputNewFolder),
+                base: path.basename(file)
+            }),
+        '2': path.format({
+                dir: options.outputPath,
+                base: path.basename(file)
+            })
     }
+    return outputType[options.outputType]
 }
 
-export const imageMinPlugins = [
+const imageMinPlugins = [
     imageminMozjpeg({ quality: 80 }),
     imageminPngquant({ quality: [0.6, 0.8] }),
     imageminGifsicle({ optimizationLevel: 2 }),
@@ -51,7 +46,7 @@ export const imageMinPlugins = [
     }),
 ];
 
-export const HTMLMinifySettings = {
+const HTMLMinifySettings = {
     collapseBooleanAttributes: true,
     collapseInlineTagWhitespace: true,
     collapseWhitespace: true,
@@ -71,6 +66,8 @@ export const HTMLMinifySettings = {
     removeTagWhitespace: true,
 };
 
-export const CleanCSSSettings = {
+const CleanCSSSettings = {
     level: 2
 }
+
+export { setImageSize, setOutputType, imageMinPlugins, HTMLMinifySettings, CleanCSSSettings }
