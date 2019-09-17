@@ -29,7 +29,6 @@
     "autoprefixer": "*",
     "babel-loader": "^8.0.6",
     "babili-webpack-plugin": "*",
-    "core-js": "*",
     "css-loader": "^3.2.0",
     "electron": "^6.0.7",
     "electron-packager": "^14.0.5",
@@ -52,6 +51,7 @@
   },
   "dependencies": {
     "clean-css": "*",
+    "core-js": "*",
     "esm": "*",
     "fs-extra": "*",
     "handbrake-js": "*",
