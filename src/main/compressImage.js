@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import mime from 'mime';
+// import sharp from 'sharp';
 
 import imagemin from 'imagemin';
 import Jimp from 'jimp';
@@ -55,3 +56,22 @@ async function resizeImage(buffer, file, options) {
         resolve(image);
     });
 }
+
+// async function resizeImage(buffer, file, options) {
+//     return new Promise(async (resolve, reject) => {
+//         if (!options.resize || options.zipHasWebFiles || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
+//         const resizeImages = setImageSize(options);
+        
+//         const image = await sharp(buffer)
+//             .rotate()
+//             .resize(resizeImages[0], resizeImages[1], {
+//                 fit: 'inside'
+//             })
+//             .then(image => {
+//                 resolve(image);
+//             })
+//             .catch(err => {
+//                 reject(err);
+//             })
+//     });
+// }
