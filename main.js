@@ -7,6 +7,7 @@ import { addToQueue } from "./src/main/index";
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+let backgroundWindow;
 
 // Keep a reference for dev mode
 let dev = false;
@@ -25,6 +26,7 @@ function createWindow() {
     }
   });
 
+  
   // and load the index.html of the app.
   let indexPath;
   if ( dev && process.argv.indexOf('--noDevServer') === -1 ) {
@@ -43,6 +45,7 @@ function createWindow() {
   }
   mainWindow.loadURL( indexPath );
 
+  
   // Don't show until we are ready and loaded
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -58,13 +61,45 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null;
+    backgroundWindow.close();
   });
+}
+
+function createBackgroundWindow() {
+  backgroundWindow = new BrowserWindow({
+    width: 1024, 
+    height: 768, 
+    show: true,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  });
+
+  let backgroundPath;
+  if ( dev && process.argv.indexOf('--noDevServer') === -1 ) {
+    backgroundPath = url.format({
+      protocol: 'http:',
+      host: 'localhost:8080',
+      pathname: 'background.html',
+      slashes: true
+    });
+  } else {
+    backgroundPath = url.format({
+      protocol: 'file:',
+      pathname: path.join(__dirname, 'dist', 'background.html'),
+      slashes: true
+    });
+  }
+  backgroundWindow.loadURL( backgroundPath );
 }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow();
+  createBackgroundWindow();
+});
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -80,6 +115,7 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
     createWindow();
+    createBackgroundWindow();
   }
 });
 
