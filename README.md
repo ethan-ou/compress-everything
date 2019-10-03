@@ -12,6 +12,9 @@ How to install:
 2. In your command line, navigate into the folder where you cloned the repository by using ```cd```, then run ```npm install --save```.
 3. Once all the installs are done, you can run the project by entering ```npm run dev```.
 
+If you get the error when running the development application: "Sharp failed to self-register", either follow the instructions here: https://electronjs.org/docs/tutorial/using-native-node-modules, or download the (Sharp precompiled binaries for electron v73)[https://github.com/lovell/sharp/releases/tag/v0.23.1] and extract them in your node_modules/sharp/build/Release folder.
+
+
 Bugs & Fixes:
 [] When resizing images through JIMP with EXIF data, the images are letterboxed.
 [] Images currently throw an error when processing MacOS thumbnails. Add extra checks in filetype to avoid this.
