@@ -19,7 +19,7 @@ module.exports = {
   output: {
     path: OUTPUT_DIR,
     publicPath: './',
-    filename: 'bundle.js'
+    filename: '[name].js'
   },
   module: {
     rules: [
