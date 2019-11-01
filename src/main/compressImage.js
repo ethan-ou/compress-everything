@@ -31,14 +31,18 @@ export async function compressImageBuffer(buffer, file, options) {
     });
 }
 
+
+//Fix: Images smaller than frame size should not be upscaled.
 async function resizeImage(buffer, file, options) {
     return new Promise(async (resolve, reject) => {
-        if (!options.resize || options.zipHasWebFiles || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
+        if (options.zipHasWebFiles || mime.getType(file) !== "image/jpeg" && mime.getType(file) !== "image/png") return resolve(buffer);
         const resizeImages = setImageSize(options);
         const image = await sharp(buffer)
             .rotate()
             .resize(resizeImages[0], resizeImages[1], {
-                fit: 'inside'
+                fit: 'inside',
+                withoutEnlargement: true,
+                kernel: 'cubic'
             })
             .toBuffer()
             .catch(err => {
